@@ -1,4 +1,13 @@
-## `decode-spam-headers.py`
+# decode-spam-headers.py
+
+Whether you are trying to understand why a specific e-mail ended up in SPAM/Junk for your daily Administrative duties or for your Red-Team Phishing simulation purposes, this script is there for you to help!
+
+Idea arose while delivering a commercial Phishing Simulation exercises against MS Office365 E5 estate, equipped with MS Defender for Office365. As one can imagine, pretty tough security stack to work with from a phishing-simulation perspective.
+After digging manually through all these Office365 SMTP headers and trying to cherry-pick these SCL values, time come to write up a proper parser for SMTP headers.
+
+Time went by, I was adding support for more and more SMTP headers - and here we have it. Tool that now comprehends tens of different headers.
+
+## Info
 
 This tool accepts on input an `*.EML` or `*.txt` file with all the SMTP headers. It will then extract a subset of interesting headers and using **79+** tests will attempt to decode them as much as possible.
 
@@ -7,7 +16,7 @@ This script also extracts all IPv4 addresses and domain names and performs full 
 Resulting output will contain useful information on why this e-mail might have been blocked.
 
 
-### Example screenshots
+### Example Screenshots
 
 - Chain of MTA servers (nicely parsed `Received` headers):
 
@@ -234,7 +243,7 @@ C:\> py decode-spam-headers.py -l tests
 
 ### Sample run
 
-Sample run:
+Sample run (output structure and contents come from an outdated version of the script):
 
 ```
   PS> py decode-spam-headers.py headers.txt
@@ -459,4 +468,20 @@ ANALYSIS:
         - WARNING! Potential Domain Impersonation!
                 - Mail's domain should resolve to:      amazonaws.com
                 - But instead first hop resolved to:    arubacloud.pl
+```
+
+
+
+---
+
+### ☕ Show Support ☕
+
+This and other projects are outcome of sleepless nights and **plenty of hard work**. If you like what I do and appreciate that I always give back to the community,
+[Consider buying me a coffee](https://github.com/sponsors/mgeeky) _(or better a beer)_ just to say thank you! 💪 
+
+---
+
+```
+Mariusz Banach / mgeeky, (@mariuszbit)
+<mb [at] binary-offensive.com>
 ```
