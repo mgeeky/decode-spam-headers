@@ -15,6 +15,8 @@ This script also extracts all IPv4 addresses and domain names and performs full 
 
 Resulting output will contain useful information on why this e-mail might have been blocked.
 
+In order to embellish your Phishing HTML code before sending it to your client, you might also want feed it into my [`phishing-HTML-linter.py`](https://github.com/mgeeky/Penetration-Testing-Tools/blob/master/phishing/phishing-HTML-linter.py). It does pretty decent job finding _bad smells_ in your HTML that will get your e-mail with increased Spam-score.
+
 
 ### Example Screenshots
 
@@ -110,6 +112,116 @@ Processed headers (more than **67+** headers are parsed):
 
 
 Most of these headers are not fully documented, therefore the script is unable to pinpoint all the details, but at least it collects all I could find on them.
+
+
+### Reverse-Engineering efforts
+
+I'm making signifcant efforts to spot and understand different Office365 ForeFront Anti-Spam ruls (SFS, ENG) despite them not being publicly documented.
+
+```
+------------------------------------------
+(5) Test: X-Forefront-Antispam-Report
+
+HEADER:
+    X-Forefront-Antispam-Report
+
+VALUE:
+    CIP:209.85.167.100;CTRY:US;LANG:de;SCL:5;SRV:;IPV:NLI;SFV:SPM;H:mail-lf1-f100.google.com;PTR:mail-l
+    f1-f100.google.com;CAT:DIMP;SFTY:9.19;SFS:(4636009)(956004)(166002)(6916009)(356005)(336012)(19
+    625305002)(22186003)(5660300002)(4744005)(6666004)(35100500006)(82960400001)(26005)(7596003)(7636003)(554460
+    02)(224303003)(1096003)(58800400005)(86362001)(9686003)(43540500002);DIR:INB;SFTY:9.19;
+
+[...]
+
+        - Message matched 24 Anti-Spam rules (SFS):           <============ opaque anti-spam rules
+                - (1096003)
+                - (166002)
+                - (19625305002)
+                - (22186003)
+                - (224303003)
+                - (26005)
+                - (336012)
+                - (356005)
+                - (35100500006)         - (SPAM) Message contained embedded image.
+
+```
+
+
+The process is purely manual and resorts to sending specifically designed mails to the Office365 mail servers and then manually reviewing and correlating collected rules.
+
+Having sent more than 60 mails already, this is what I can tell by now about Microsoft's rules:
+
+```py
+
+    #
+    # Below rules were collected solely in a trial-and-error manner or by scraping any 
+    # pieces of information from all around the Internet.
+    #
+    # They do not represent the actual Anti-Spam rule name or context and surely represent 
+    # something close to what is understood (or they may have totally different meaning).
+    # 
+    # Until we'll be able to review anti-spam rules documention, there is no viable mean to map
+    # rule ID to its meaning.
+    #
+
+    Anti_Spam_Rules_ReverseEngineered = \
+    {
+        '35100500006' : logger.colored('(SPAM) Message contained embedded image.', 'red'),
+
+        # https://docs.microsoft.com/en-us/answers/questions/416100/what-is-meanings-of-39x-microsoft-antispam-mailbox.html
+        '520007050' : logger.colored('(SPAM) Moved message to Spam and created Email Rule to move messages from this particular sender to Junk.', 'red'),
+
+        # triggered on an empty mail with subject being: "test123 - viagra"
+        '162623004' : 'Subject line contained suspicious words (like Viagra).',
+
+        # triggered on mail with subject "test123" and body being single word "viagra"
+        '19618925003' : 'Mail body contained suspicious words (like Viagra).',
+
+        # triggered on mail with empty body and subject "Click here"
+        '28233001' : 'Subject line contained suspicious words luring action (ex. "Click here"). ',
+
+        # triggered on a mail with test subject and 1500 words of http://nietzsche-ipsum.com/
+        '30864003' : 'Mail body contained a lot of text (more than 10.000 characters).',
+
+        # mails that had simple message such as "Hello world" triggered this rule, whereas mails with
+        # more than 150 words did not.
+        '564344004' : 'HTML mail body with less than 150 words of text (not sure how much less though)',
+
+        # message was sent with a basic html and only one <u> tag in body.
+        '67856001' : 'HTML mail body contained underline <u> tag.',
+
+        # message with html,head,body and body containing simple text with no b/i/u formatting.
+        '579124003' : 'HTML mail body contained text, but no text formatting (<b>, <i>, <u>) was present',
+
+        # This is a strong signal. Mails without <a> doesnt have this rule.
+        '166002' : 'HTML mail body contained URL <a> link.',
+
+        # Message contained <a href="https://something.com/file.html?parameter=value" - GET parameter with value.
+        '21615005' : 'Mail body contained <a> tag with URL containing GET parameter: ex. href="https://foo.bar/file?aaa=bbb"',
+
+        # Message contained <a href="https://something.com/file.html?parameter=https://another.com/website" 
+        # - GET parameter with value, being a URL to another website
+        '45080400002' : 'Mail body contained <a> tag with URL containing GET parameter with value of another URL: ex. href="https://foo.bar/file?aaa=https://baz.xyz/"',
+
+        # Message contained <a> with href pointing to a file with dangerous extension, such as file.exe
+        '460985005' : 'Mail body contained HTML <a> tag with href URL pointing to a file with dangerous extension (such as .exe)',
+
+        #
+        # Message1: GoPhish -> VPS 587/tcp redirector -> smtp.gmail.com:587 -> target
+        # Message2: GoPhish -> VPS 587/tcp redirector -> smtp-relay.gmail.com:587 -> target
+        #
+        # These were the only differences I spotted:
+        #   Message1 - FirstHop Gmail SMTP Received with ESMTPS.
+        #   Message2 - FirstHop Gmail SMTP-Relay Received with ESMTPSA.
+        #
+        '121216002' : 'First Hop MTA SMTP Server used as a SMTP Relay. It\'s known to originate e-mails, but here it acted as a Relay. Or maybe due to use of "with ESMTPSA" instead of ESMTPS?',
+
+    }
+```
+
+Should you know anything about any other Office365 anti-spam rules (or have suggestions to the ones described above) - let me know in this repo's issues, I'll add it straight away :)
+
+
 
 ### Usage
 
