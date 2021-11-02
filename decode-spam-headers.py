@@ -871,7 +871,7 @@ class SMTPHeadersAnalysis:
             'User Custom Flow (?) - custom mail flow rule applied on message?',
             {
                 '0' : 'No user custom mail rule applied.',
-                '1' : 'User custom mail rule applied.',
+                '1' : logger.colored('User custom mail rule applied.', "yellow"),
             }
         ),
 
@@ -887,7 +887,7 @@ class SMTPHeadersAnalysis:
             'Folder Rules applied to this Message',
             {
                 'ExclusiveSettings' : '',
-                'CustomRules' : 'An existing folder move rule was applied on this message.',
+                'CustomRules' : logger.colored('An existing folder move rule was applied on this message.', 'yellow'),
             } 
         ),
 
@@ -2099,17 +2099,45 @@ Results will be unsound. Make sure you have pasted your headers with correct spa
             'description' : '',
         }
 
+    @staticmethod
+    def getOffice365TenantNameById(tenantID):
+        url = 'https://login.microsoftonline.com/TENANT_ID/oauth2/authorize?client_id=TENANT_ID&response_type=id_token&redirect_uri=http%3a%2f%2flocalhost%2fmyapp%2f&response_mode=form_post&scope=openid&state=12345&nonce=678910'
+        url = url.replace('TENANT_ID', tenantID)
+
+        try:
+            r = requests.get(
+                url, 
+                allow_redirects=True,
+                headers = {
+                    'User-Agent' : 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/95.0.4600.00 Safari/537.36',
+                })
+
+            out = r.text
+
+            if 'AADSTS700016'.lower() in out.lower():
+                m = re.search(r"was not found in the directory '([^']+)'", out, re.I)
+                if m:
+                    return m.group(1)
+
+        except:
+            pass
+        
+        return ''
+
     def testO365TenantID(self):
         (num, header, value) = self.getHeader('X-MS-Exchange-CrossTenant-Id')
         if num == -1: return []
 
         value = SMTPHeadersAnalysis.flattenLine(value).strip().replace(' ', '')
-        result = f'- Office365 Tenant ID: {self.logger.colored(value, "green")}\n'
+        result = f'- Office365 Tenant ID: {self.logger.colored(value, "cyan")}\n'
 
         try:
             r = requests.get(f'https://login.microsoftonline.com/{value}/.well-known/openid-configuration')
             out = r.json()
 
+            #
+            # https://docs.microsoft.com/en-us/azure/active-directory/develop/v2-protocols-oidc
+            #
             #
             # Sample response for "microsoft.com":
             #   https://login.microsoftonline.com/microsoft.com/.well-known/openid-configuration
@@ -2184,7 +2212,13 @@ Results will be unsound. Make sure you have pasted your headers with correct spa
                 m = out['error']
                 result += '\t- Office365 Tenant ' + self.logger.colored(f'does not exist: {m}\n', 'red')
             else:
-                result += '\t- Office365 Tenant ' + self.logger.colored(f'exists.\n', 'green')
+                result += '\t- Office365 Tenant ' + self.logger.colored(f'exists.', 'yellow')
+
+                name = SMTPHeadersAnalysis.getOffice365TenantNameById(value)
+                if len(name) > 0:
+                    result += ' named as: ' + self.logger.colored(name, "green")
+
+                result += '\n'
 
                 tmp = ''
 
@@ -2206,8 +2240,11 @@ Results will be unsound. Make sure you have pasted your headers with correct spa
                     result += '\n' + tmp + '\n'
 
         except:
-            self.logger.err(f'Could not fetch Office365 tenant OpenID configuration.')
+            self.logger.err(f'Could not fetch Office365 tenant OpenID configuration. Use --debug for more details.')
             result += self.logger.colored('\t- Error: Could not fetch information about Office365 Tenant.\n', 'red')
+
+            if options['debug']:
+                raise
 
         return {
             'header': header,
@@ -5324,6 +5361,8 @@ def main(argv):
         for test in tests:
             (testId, testName, testFunc) = test
 
+            if test in b:
+                testName += ' (use -a to show its results)'
             print(f'\t{testId: >7} - {testName}')
 
         print('\n')
