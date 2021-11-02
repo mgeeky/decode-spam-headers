@@ -77,6 +77,8 @@
 #   - X-microsoft-antispam-untrusted
 #   - X-sophos-senderhistory
 #   - X-sophos-rescan
+#   - X-MS-Exchange-CrossTenant-Id
+#   - X-OriginatorOrg
 #
 # Usage:
 #   ./decode-spam-headers [options] <smtp-headers.txt>
@@ -91,6 +93,7 @@
 # Requirements:
 #   - packaging
 #   - dnspython
+#   - requests
 #
 # Mariusz Banach / mgeeky, '21
 # <mb [at] binary-offensive.com>
@@ -120,6 +123,16 @@ except ImportError:
         # pip3 install packaging
 ''')
     sys.exit(1)
+
+try:
+    import requests
+except ImportError:
+    print('''
+[!] You need to install requests: 
+        # pip3 install requests
+''')
+    sys.exit(1)
+
 
 try:
     import dns.resolver
@@ -360,7 +373,7 @@ class SMTPHeadersAnalysis:
         'yandex', 'yandexbot', 'zillya', 'zonealarm', 'zscaler', '-sea-', 'perlmx', 'trustwave',
         'mailmarshal', 'tmase', 'startscan', 'fe-etp', 'jemd', 'suspicious', 'grey', 'infected', 'unscannable',
         'dlp-', 'sanitize', 'mailscan', 'barracuda', 'clearswift', 'messagelabs', 'msw-jemd', 'fe-etp', 'symc-ess',
-        'starscan', 'mailcontrol',
+        'starscan', 'mailcontrol'
     )
 
     Interesting_Headers = (
@@ -372,7 +385,35 @@ class SMTPHeadersAnalysis:
         'X-ICPINFO', 'x-locaweb-id', 'X-MC-User', 'mailersend', 'MailiGen', 'Mandrill', 'MarketoID', 'X-Messagebus-Info',
         'Mixmax', 'X-PM-Message-Id', 'postmark', 'X-rext', 'responsys', 'X-SFDC-User', 'salesforce', 'x-sg-', 'x-sendgrid-',
         'silverpop', '.mkt', 'X-SMTPCOM-Tracking-Number', 'X-vrfbldomain', 'verticalresponse',
-        'yesmail', 
+        'yesmail', 'logon', 'safelink', 'safeattach', 
+    )
+
+    Security_Appliances_And_Their_Headers = \
+    (
+        ('Exchange Online Protection'                            , 'X-EOP'),
+        ('MS Defender For Office365'                             , '-Safelinks'),
+        ('Proofpoint Email Protection'                           , 'X-Proofpoint'),
+        ('Trend Micro Anti-Spam'                                 , 'X-TMASE-'),
+        ('Trend Micro Anti-Spam'                                 , 'X-TM-AS-'),
+        ('Trend Micro InterScan Messaging Security'              , 'X-IMSS-'),
+        ('Barracuda Email Security'                              , 'X-Barracuda-'),
+        ('Mimecast'                                              , 'X-Mimecast-'),
+        ('FireEye Email Security Solution'                       , 'X-FireEye'),
+        ('FireEye Email Security Solution'                       , 'X-FE-'),
+        ('Cisco IronPort'                                        , 'X-IronPort-'),
+        ('Cisco IronPort / Email Security Appliance (ESA)'       , 'X-Policy'),
+        ('Cisco IronPort / Email Security Appliance (ESA)'       , 'X-SBRS'),
+        ('Sophos Email Appliance (PureMessage)'                  , 'X-SEA-'),
+        ('Exchange Server 2016 Anti-Spam'                        , 'SpamDiagnostic'),
+        ('SpamAssassin'                                          , 'X-Spam-'),
+        ('SpamAssassin'                                          , 'X-IP-Spam-'),
+        ('OVH Anti-Spam'                                         , 'X-VR-'),
+        ('OVH Anti-Spam'                                         , 'X-Ovh-'),
+        ('MS Defender Advanced Threat Protection'                , 'X-MS.+-Atp'),
+        ('MS Defender Advanced Threat Protection - Safe Links'   , '-ATPSafeLinks'),
+        ('Cisco Advanced Malware Protection (AMP)'               , 'X-Amp-'),
+        ('MS ForeFront Anti-Spam'                                , 'X-Microsoft-Antispam'),
+        ('MS ForeFront Anti-Spam'                                , 'X-Forefront-Antispam'),
     )
 
     Headers_Known_For_Breaking_Line = (
@@ -694,7 +735,7 @@ class SMTPHeadersAnalysis:
 
         # Message contained <a href="https://something.com/file.html?parameter=https://another.com/website" 
         # - GET parameter with value, being a URL to another website
-        '45080400002' : 'Mail body contained <a> tag with URL containing GET parameter with value of another URL: ex. href="https://foo.bar/file?aaa=https://baz.xyz/"',
+        '45080400002' : 'Something about <a> tag\'s URL. Possibly it contained GET parameter with value of another URL: ex. href="https://foo.bar/file?aaa=https://baz.xyz/"',
 
         # Message contained <a> with href pointing to a file with dangerous extension, such as file.exe
         '460985005' : 'Mail body contained HTML <a> tag with href URL pointing to a file with dangerous extension (such as .exe)',
@@ -709,6 +750,29 @@ class SMTPHeadersAnalysis:
         #
         '121216002' : 'First Hop MTA SMTP Server used as a SMTP Relay. It\'s known to originate e-mails, but here it acted as a Relay. Or maybe due to use of "with ESMTPSA" instead of ESMTPS?',
 
+        # Triggered on message with <a> added to HTML: <a href="https://support.spotify.com/is-en/">https://www.reddit.com/</a>
+        '966005' : 'Mail body contained link tag with potentially masqueraded URL: <a href="https://attacker.com">https://example.com</a>',
+
+        #
+        # Message1: GoPhish EC2 -> another EC2 with socat to smtp.gmail.com:587 (authenticated) -> Target
+        # Message2: GoPhish EC2 -> Gsuite -> Target
+        #
+        # Subject, mail body were exactly the same.
+        #
+        # Below two rules were added to the second message. My understanding is that they're somehow referring
+        # to the reputation of the first-hop server, maybe reverse-DNS resolution.
+        #
+        '5002400100002' : "(GUESSING) Somehow related to First Hop server reputation, it's reverse-PTR resolution or domain impersonation",
+        '58800400005'   : "(GUESSING) Somehow related to First Hop server reputation, it's reverse-PTR resolution or domain impersonation",
+
+        '19625305002' : '(GUESSING) Something to do with the HTML code and used tags/structures',
+        '43540500002' : '(GUESSING) Something to do with the HTML code and used tags/structures',
+
+        '460985005' : '(GUESSING) Something to do with either more-complex HTML code or with the <a> tag and its URL.',
+
+        # Triggered on an empty text message, subject "test" - that was marked with "Domain Impersonation", however 
+        # ForeFront Anti-Spam headers did not support that Domain Impersonation. Weird.
+        '22186003' : '(GUESSING) Something to do with either Text message (non-HTML) or probable Domain Impersonation'
     }
 
     ForeFront_Spam_Confidence_Levels = {
@@ -733,9 +797,9 @@ class SMTPHeadersAnalysis:
 
     ForeFront_Bulk_Confidence_Levels = {
         0 : logger.colored('The message isn\'t from a bulk sender.', 'green'),
-        1 : logger.colored('The message is from a bulk sender that generates few complaints.', 'magenta'),
-        2 : logger.colored('The message is from a bulk sender that generates few complaints.', 'magenta'),
-        3 : logger.colored('The message is from a bulk sender that generates few complaints.', 'magenta'),
+        1 : logger.colored('The message is from a bulk sender that generates few complaints.', 'yellow'),
+        2 : logger.colored('The message is from a bulk sender that generates few complaints.', 'yellow'),
+        3 : logger.colored('The message is from a bulk sender that generates few complaints.', 'yellow'),
         4 : logger.colored('The message is from a bulk sender that generates a mixed number of complaints.', 'red'),
         5 : logger.colored('The message is from a bulk sender that generates a mixed number of complaints.', 'red'),
         6 : logger.colored('The message is from a bulk sender that generates a mixed number of complaints.', 'red'),
@@ -791,6 +855,7 @@ class SMTPHeadersAnalysis:
             {
                 'I' : logger.colored('Inbox directory', 'green'),
                 'J' : logger.colored('JUNK directory', 'red'),
+                'C' : logger.colored('Custom directory', 'yellow'),
             }
         ),
 
@@ -1128,12 +1193,15 @@ class SMTPHeadersAnalysis:
             ('66', 'X-Proofpoint-Spam-Details',                   self.testXProofpointSpamDetails),
             ('67', 'X-Proofpoint-Virus-Version',                  self.testXProofpointVirusVersion),
             ('68', 'SPFCheck',                                    self.testSPFCheck),
-
             ('69', 'X-Barracuda-Spam-Score',                      self.testXBarracudaSpamScore),
             ('70', 'X-Barracuda-Spam-Status',                     self.testXBarracudaSpamStatus),
             ('71', 'X-Barracuda-Spam-Report',                     self.testXBarracudaSpamReport),
             ('72', 'X-Barracuda-Bayes',                           self.testXBarracudaBayes),
             ('73', 'X-Barracuda-Start-Time',                      self.testXBarracudaStartTime),
+
+            ('83', 'Office365 Tenant ID',                         self.testO365TenantID),
+            ('84', 'Organization Name',                           self.testOrganizationIsO365Tenant),
+            ('85', 'MS Defender For Office365 Safe Links Version',self.testSafeLinksKeyVer),
 
             #
             # These tests shall be the last ones.
@@ -1154,6 +1222,12 @@ class SMTPHeadersAnalysis:
         testsReturningArray = (
             ('82', 'Header Containing Client IP',                 self.testAnyOtherIP),
         )
+
+        ids = set()
+
+        for test in (tests + testsDecodeAll + testsReturningArray):
+            assert test[0] not in ids, f"Test ID already taken: ({test[0]} - '{test[1]}')! IDs must be unique!"
+            ids.add(test[0])
 
         return (tests, testsDecodeAll, testsReturningArray)
 
@@ -1372,10 +1446,10 @@ Results will be unsound. Make sure you have pasted your headers with correct spa
 
         idsOfDecodeAll = [int(x[0]) for x in testsDecodeAll]
 
-        for a in self.testsToRun:
-            if a in idsOfDecodeAll:
-                self.decode_all = True
-                break
+        #for a in self.testsToRun:
+        #    if a in idsOfDecodeAll:
+        #        self.decode_all = True
+        #        break
 
         if self.decode_all:
             for testId, testName, testFunc in testsDecodeAll:
@@ -1672,12 +1746,32 @@ Results will be unsound. Make sure you have pasted your headers with correct spa
             'description' : '',
         }
 
+    def testSafeLinksKeyVer(self):
+        (num, header, value) = self.getHeader('X-MS-Exchange-Safelinks-Url-KeyVer')
+        if num == -1: return []
+
+        value = value.strip()
+        self.securityAppliances.add('MS Defender For Office365 - Safe Links')
+        result = f'- Microsoft Defender For Office365 (MDO) Safe Links was used in key version: {self.logger.colored(value, "green")}\n'
+        
+        
+        return {
+            'header': header,
+            'value' : value,
+            'analysis' : result,
+            'description' : '',
+        }
 
     def testSecurityAppliances(self):
         result = ''
         vals = [x.lower() for x in SMTPHeadersAnalysis.Header_Keywords_That_May_Contain_Spam_Info]
 
         self.logger.dbg('Spotted clues about security appliances:')
+
+        for (num, header, value) in self.headers:
+            for product, hdr in SMTPHeadersAnalysis.Security_Appliances_And_Their_Headers:
+                if re.search(re.escape(hdr), header, re.I):
+                    self.securityAppliances.add(product)
 
         for a in self.securityAppliances:
             parts = a.split(' ')
@@ -1700,6 +1794,174 @@ Results will be unsound. Make sure you have pasted your headers with correct spa
             'header': '',
             'value' : '',
             'analysis' : '- During headers analysis, spotted following clues about Security Appliances:\n\n' + result,
+            'description' : '',
+        }
+
+    def testO365TenantID(self):
+        (num, header, value) = self.getHeader('X-MS-Exchange-CrossTenant-Id')
+        if num == -1: return []
+
+        value = SMTPHeadersAnalysis.flattenLine(value).strip().replace(' ', '')
+        result = f'- Office365 Tenant ID: {self.logger.colored(value, "green")}\n'
+
+        try:
+            r = requests.get(f'https://login.microsoftonline.com/{value}/.well-known/openid-configuration')
+            out = r.json()
+
+            #
+            # Sample response for "microsoft.com":
+            #   https://login.microsoftonline.com/microsoft.com/.well-known/openid-configuration
+            #
+            # RESPONSE:
+            # {
+            #   "token_endpoint": "https://login.microsoftonline.com/72f988bf-86f1-41af-91ab-2d7cd011db47/oauth2/token",
+            #   "token_endpoint_auth_methods_supported": [
+            #     "client_secret_post",
+            #     "private_key_jwt",
+            #     "client_secret_basic"
+            #   ],
+            #   "jwks_uri": "https://login.microsoftonline.com/common/discovery/keys",
+            #   "response_modes_supported": [
+            #     "query",
+            #     "fragment",
+            #     "form_post"
+            #   ],
+            #   "subject_types_supported": [
+            #     "pairwise"
+            #   ],
+            #   "id_token_signing_alg_values_supported": [
+            #     "RS256"
+            #   ],
+            #   "response_types_supported": [
+            #     "code",
+            #     "id_token",
+            #     "code id_token",
+            #     "token id_token",
+            #     "token"
+            #   ],
+            #   "scopes_supported": [
+            #     "openid"
+            #   ],
+            #   "issuer": "https://sts.windows.net/72f988bf-86f1-41af-91ab-2d7cd011db47/",
+            #   "microsoft_multi_refresh_token": true,
+            #   "authorization_endpoint": "https://login.microsoftonline.com/72f988bf-86f1-41af-91ab-2d7cd011db47/oauth2/authorize",
+            #   "device_authorization_endpoint": "https://login.microsoftonline.com/72f988bf-86f1-41af-91ab-2d7cd011db47/oauth2/devicecode",
+            #   "http_logout_supported": true,
+            #   "frontchannel_logout_supported": true,
+            #   "end_session_endpoint": "https://login.microsoftonline.com/72f988bf-86f1-41af-91ab-2d7cd011db47/oauth2/logout",
+            #   "claims_supported": [
+            #     "sub",
+            #     "iss",
+            #     "cloud_instance_name",
+            #     "cloud_instance_host_name",
+            #     "cloud_graph_host_name",
+            #     "msgraph_host",
+            #     "aud",
+            #     "exp",
+            #     "iat",
+            #     "auth_time",
+            #     "acr",
+            #     "amr",
+            #     "nonce",
+            #     "email",
+            #     "given_name",
+            #     "family_name",
+            #     "nickname"
+            #   ],
+            #   "check_session_iframe": "https://login.microsoftonline.com/72f988bf-86f1-41af-91ab-2d7cd011db47/oauth2/checksession",
+            #   "userinfo_endpoint": "https://login.microsoftonline.com/72f988bf-86f1-41af-91ab-2d7cd011db47/openid/userinfo",
+            #   "kerberos_endpoint": "https://login.microsoftonline.com/72f988bf-86f1-41af-91ab-2d7cd011db47/kerberos",
+            #   "tenant_region_scope": "WW",
+            #   "cloud_instance_name": "microsoftonline.com",
+            #   "cloud_graph_host_name": "graph.windows.net",
+            #   "msgraph_host": "graph.microsoft.com",
+            #   "rbac_url": "https://pas.windows.net"
+            # }
+
+            if 'error' in out.keys() and out['error'] != '':
+                m = out['error']
+                result += '\t- Office365 Tenant ' + self.logger.colored(f'does not exist: {m}\n', 'red')
+            else:
+                result += '\t- Office365 Tenant ' + self.logger.colored(f'exists.\n', 'green')
+
+                tmp = ''
+
+                num0 = 0
+                for (num1, header1, value1) in self.headers:
+                    value1 = SMTPHeadersAnalysis.flattenLine(value1).strip()
+                    if value.lower() in value1.lower() and header1.lower() != header.lower():
+                        num0 += 1
+                        pos = value1.lower().find(value.lower())
+                        val = value1
+                        if pos != -1:
+                            val = value1[:pos] + self.logger.colored(value1[pos:pos+len(value)], 'yellow') + value1[pos+len(value):]
+
+                        tmp += f'\t- ({num0:02}) Header: {header1}\n'
+                        tmp += f'\t        Value: {val}\n\n'
+
+                if len(tmp) > 0:
+                    result += '\n    - Tenant ID found in following headers:\n'
+                    result += '\n' + tmp + '\n'
+
+        except:
+            self.logger.err(f'Could not fetch Office365 tenant OpenID configuration.')
+            result += self.logger.colored('\t- Error: Could not fetch information about Office365 Tenant.\n', 'red')
+
+        return {
+            'header': header,
+            'value' : value,
+            'analysis' : result,
+            'description' : '',
+        }
+
+
+    def testOrganizationIsO365Tenant(self):
+        (num, header, value) = self.getHeader('X-OriginatorOrg')
+        if num == -1: return []
+
+        value = SMTPHeadersAnalysis.flattenLine(value).strip()
+
+        result = f'- Organization name disclosed: {self.logger.colored(value, "green")}\n'
+
+        try:
+            r = requests.get(f'https://login.microsoftonline.com/{value}/.well-known/openid-configuration')
+            out = r.json()
+
+            if 'error' in out.keys() and out['error'] != '':
+                m = out['error']
+                return []
+
+            result += '\n    - Organization disclosed in "X-OriginatorOrg" is a valid Office 365 Tenant:\n'
+            tid = out['token_endpoint'].replace('https://login.microsoftonline.com/', '')
+            tid = tid.replace('/oauth2/token', '')
+
+            result += '\t- Office365 Tenant ID: ' + self.logger.colored(tid, 'green') + '\n'
+            tmp = ''
+
+            num0 = 0
+            for (num1, header1, value1) in self.headers:
+                value1 = SMTPHeadersAnalysis.flattenLine(value1).strip()
+                if value.lower() in value1.lower() and header1.lower() != header.lower():
+                    num0 += 1
+                    pos = value1.lower().find(value.lower())
+                    val = value1
+                    if pos != -1:
+                        val = value1[:pos] + self.logger.colored(value1[pos:pos+len(value)], 'yellow') + value1[pos+len(value):]
+
+                    tmp += f'\t- ({num0:02}) Header: {header1}\n'
+                    tmp += f'\t        Value: {val}\n\n'
+
+            if len(tmp) > 0:
+                result += '\n    - Organization name was also found in following headers:\n'
+                result += '\n' + tmp + '\n'
+
+        except:
+            self.logger.err(f'Could not fetch Office365 tenant OpenID configuration.')
+
+        return {
+            'header': header,
+            'value' : value,
+            'analysis' : result,
             'description' : '',
         }
 
@@ -3314,6 +3576,7 @@ Src: https://www.cisco.com/c/en/us/td/docs/security/esa/esa11-1/user_guide/b_ESA
         for prop in props:
             if prop in SMTPHeadersAnalysis.ATP_Message_Properties.keys():
                 result += f'\t- ' + self.logger.colored(SMTPHeadersAnalysis.ATP_Message_Properties[prop], 'magenta') + '\n'
+                self.securityAppliances.add('MS Defender For Office365 - ' + SMTPHeadersAnalysis.ATP_Message_Properties[prop])
 
         return {
             'header' : header,
@@ -3721,11 +3984,11 @@ Src: https://www.cisco.com/c/en/us/td/docs/security/esa/esa11-1/user_guide/b_ESA
 
         result = ''
 
-        obj1 = self._parseBulk(num, header, value)
-        result += obj1['analysis']
-
         obj2 = self._parseAntiSpamReport(num, header, value)
         result += obj2['analysis']
+
+        obj1 = self._parseBulk(num, header, value)
+        result += '\n' + obj1['analysis']
 
         self.securityAppliances.add('MS ForeFront Anti-Spam')
 
@@ -4113,14 +4376,17 @@ Src: https://www.cisco.com/c/en/us/td/docs/security/esa/esa11-1/user_guide/b_ESA
         if num == -1: return []
 
         parsed = {}
-        self.securityAppliances.add('MS ForeFront Anti-Spam')
-        result = '- This header denotes what to do with received message, where to put it.\n\n'
+        self.securityAppliances.add('MS ForeFront Anti-Spam') 
+        result = '- This header denotes where to move received message. Informs about applied Mail Rules, target directory in user\'s Inbox.\n\n'
 
         for entry in value.split(';'):
             if len(entry.strip()) == 0: continue
             k, v = entry.split(':')
             if k not in parsed.keys():
-                parsed[k] = v
+                parsed[k.lower()] = v
+
+        if 'ucf' in parsed.keys() and 'dest' in parsed.keys() and parsed['ucf'] == '1' and parsed['dest'] == 'J':
+            result += self.logger.colored(f'- WARNING: User created a custom mail rule that moved this message to JUNK folder!\n', "red")
 
         for k, v in parsed.items():
             elem = None
@@ -4155,9 +4421,9 @@ Src: https://www.cisco.com/c/en/us/td/docs/security/esa/esa11-1/user_guide/b_ESA
                     result += tmp + '\n'
 
         for k in ['SFS', 'RULEID', 'ENG']:
-            if k in parsed.keys():
+            if k.lower() in parsed.keys():
                 res = ''
-                rules = [x.replace('(', '') for x in parsed[k].split(')')]
+                rules = [x.replace('(', '') for x in parsed[k.lower()].split(')')]
 
                 if len(rules) == 1 and len(rules[0].strip()) == 0:
                     rules = []
@@ -4590,6 +4856,7 @@ def printOutput(out):
             value = v['value']
 
             analysis = analysis.strip()
+            if analysis.startswith('\n'): analysis[1:]
 
             value = str(textwrap.fill(
                 v['value'], 
@@ -4628,7 +4895,8 @@ def printOutput(out):
     {value}
 
 {logger.colored("ANALYSIS", "yellow")}:
-    {analysis}
+
+{analysis}
 '''
             else:
                 output += f'''
@@ -4636,7 +4904,8 @@ def printOutput(out):
 ({num}) Test: {logger.colored(k, "cyan")}
 
 {logger.colored("ANALYSIS", "yellow")}:
-    {analysis}
+
+{analysis}
 '''
 
         if options['format'] == 'html':
