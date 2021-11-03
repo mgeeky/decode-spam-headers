@@ -87,6 +87,7 @@
 #   - X-SpamExperts-Evidence
 #   - X-Recommended-Action
 #   - X-AppInfo
+#   - X-TM-AS-MatchedID
 #
 # Usage:
 #   ./decode-spam-headers [options] <smtp-headers.txt>
@@ -408,31 +409,35 @@ class SMTPHeadersAnalysis:
 
     Security_Appliances_And_Their_Headers = \
     (
-        ('Exchange Online Protection'                            , 'X-EOP'),
-        ('MS Defender For Office365'                             , '-Safelinks'),
-        ('Proofpoint Email Protection'                           , 'X-Proofpoint'),
-        ('Trend Micro Anti-Spam'                                 , 'X-TMASE-'),
-        ('Trend Micro Anti-Spam'                                 , 'X-TM-AS-'),
-        ('Trend Micro InterScan Messaging Security'              , 'X-IMSS-'),
         ('Barracuda Email Security'                              , 'X-Barracuda-'),
-        ('Mimecast'                                              , 'X-Mimecast-'),
-        ('FireEye Email Security Solution'                       , 'X-FireEye'),
-        ('FireEye Email Security Solution'                       , 'X-FE-'),
-        ('Cisco IronPort'                                        , 'X-IronPort-'),
+        ('Cisco Advanced Malware Protection (AMP)'               , 'X-Amp-'),
         ('Cisco IronPort / Email Security Appliance (ESA)'       , 'X-Policy'),
         ('Cisco IronPort / Email Security Appliance (ESA)'       , 'X-SBRS'),
-        ('Sophos Email Appliance (PureMessage)'                  , 'X-SEA-'),
+        ('Cisco IronPort'                                        , 'X-IronPort-'),
+        ('Exchange Online Protection'                            , 'X-EOP'),
         ('Exchange Server 2016 Anti-Spam'                        , 'SpamDiagnostic'),
-        ('SpamAssassin'                                          , 'X-Spam-'),
-        ('SpamAssassin'                                          , 'X-IP-Spam-'),
-        ('OVH Anti-Spam'                                         , 'X-VR-'),
-        ('OVH Anti-Spam'                                         , 'X-Ovh-'),
-        ('MS Defender Advanced Threat Protection'                , 'X-MS.+-Atp'),
+        ('FireEye Email Security Solution'                       , 'X-FE-'),
+        ('FireEye Email Security Solution'                       , 'X-FireEye'),
+        ('Mimecast'                                              , 'X-Mimecast-'),
         ('MS Defender Advanced Threat Protection - Safe Links'   , '-ATPSafeLinks'),
-        ('Cisco Advanced Malware Protection (AMP)'               , 'X-Amp-'),
-        ('n-able Mail Assure (SpamExperts)'                      , 'SpamExperts-'),
-        ('MS ForeFront Anti-Spam'                                , 'X-Microsoft-Antispam'),
+        ('MS Defender Advanced Threat Protection'                , 'X-MS.+-Atp'),
+        ('MS Defender For Office365'                             , '-Safelinks'),
         ('MS ForeFront Anti-Spam'                                , 'X-Forefront-Antispam'),
+        ('MS ForeFront Anti-Spam'                                , 'X-Microsoft-Antispam'),
+        ('n-able Mail Assure (SpamExperts)'                      , 'SpamExperts-'),
+        ('OVH Anti-Spam'                                         , 'X-Ovh-'),
+        ('OVH Anti-Spam'                                         , 'X-VR-'),
+        ('Proofpoint Email Protection'                           , 'X-Proofpoint'),
+        ('Sophos Email Appliance (PureMessage)'                  , 'X-SEA-'),
+        ('SpamAssassin'                                          , 'X-IP-Spam-'),
+        ('SpamAssassin'                                          , 'X-Spam-'),
+        ('Symantec Email Security'                               , 'X-SpamInfo'), 
+        ('Symantec Email Security'                               , 'X-SpamReason'), 
+        ('Symantec Email Security'                               , 'X-StarScan'), 
+        ('Symantec Email Security'                               , 'X-SYMC-'), 
+        ('Trend Micro Anti-Spam'                                 , 'X-TM-AS-'),
+        ('Trend Micro Anti-Spam'                                 , 'X-TMASE-'),
+        ('Trend Micro InterScan Messaging Security'              , 'X-IMSS-'),
     )
 
     Headers_Known_For_Breaking_Line = (
@@ -1541,6 +1546,8 @@ class SMTPHeadersAnalysis:
             ('93', 'X-SpamExperts-Evidence',                      self.testXSpamExpertsEvidence),
             ('94', 'X-Recommended-Action',                        self.testXRecommendedAction),
             ('95', 'X-AppInfo',                                   self.testXAppInfo),
+            ('96', 'X-Spam',                                      self.testXSpam),
+            ('97', 'X-TM-AS-MatchedID',                           self.testXTMASMatchedID),
             
 
             #
@@ -2810,6 +2817,33 @@ Results will be unsound. Make sure you have pasted your headers with correct spa
         if value.strip().lower() == 'no': 
             result += '\t- system did not Block this Sender\n'
 
+        return {
+            'header': header,
+            'value' : value,
+            'analysis' : result,
+            'description' : '',
+        }
+
+    def testXTMASMatchedID(self):
+        (num, header, value) = self.getHeader('X-TM-AS-MatchedID')
+        if num == -1: return []
+
+        value = SMTPHeadersAnalysis.flattenLine(value).replace(' ', '').replace('\n', '')
+
+        try:
+            rules = sorted([int(x) for x in value.strip().split('-')])
+
+            result = f'- Trend Micro Anti-Spam triggered following {self.logger.colored(len(rules), "yellow")} rules on this e-mail:\n\n'
+
+            for rule in rules:
+                result += f'\t- {rule}\n'
+        
+        except:
+            result = f'- Trend Micro Anti-Spam triggered following rules on this e-mail:\n\n'
+            result += f'{value}\n'
+
+        self.securityAppliances.add('Trend Micro Anti-Spam')
+        
         return {
             'header': header,
             'value' : value,
@@ -5122,6 +5156,36 @@ Src: https://www.cisco.com/c/en/us/td/docs/security/esa/esa11-1/user_guide/b_ESA
         self.securityAppliances.add(value)
         result = f'- X-Mailer header was present and contained value: {vvv}\n'
         result +  '  This header typically indicates sending client\'s name (similar to User-Agent).'
+
+        return {
+            'header' : header,
+            'value': value,
+            'analysis' : result,
+            'description' : '',
+        }
+
+    def testXSpam(self):
+        (num, header, value) = self.getHeader('X-Spam')
+        if num == -1: return []
+
+        vvv = SMTPHeadersAnalysis.flattenLine(value).strip()
+        col = 'yellow'
+        msg = ''
+        if vvv.lower() == 'no': 
+            col = 'green'
+            msg = 'Not a spam'
+        if vvv.lower() == 'yes': 
+            col = 'red'
+            msg = 'This message was a Spam'
+        if vvv.find(' ') == -1: 
+            vvv = vvv.upper()
+
+        vvv = self.logger.colored(vvv, col)
+        m = ''
+        if len(msg) > 0:
+            m = f' ({msg})'
+
+        result = f'- X-Spam was set with:\n\t- {vvv}{m}\n'
 
         return {
             'header' : header,

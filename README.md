@@ -119,6 +119,7 @@ Processed headers (more than **76+** headers are parsed):
 - `X-SpamExperts-Evidence`
 - `X-Recommended-Action`
 - `X-AppInfo`
+- `X-Spam`
 
 
 Most of these headers are not fully documented, therefore the script is unable to pinpoint all the details, but at least it collects all I could find on them.
