@@ -9,7 +9,7 @@ Time went by, I was adding support for more and more SMTP headers - and here we 
 
 ## Info
 
-This tool accepts on input an `*.EML` or `*.txt` file with all the SMTP headers. It will then extract a subset of interesting headers and using **79+** tests will attempt to decode them as much as possible.
+This tool accepts on input an `*.EML` or `*.txt` file with all the SMTP headers. It will then extract a subset of interesting headers and using **95+** tests will attempt to decode them as much as possible.
 
 This script also extracts all IPv4 addresses and domain names and performs full DNS resolution of them.
 
@@ -40,7 +40,7 @@ In order to embellish your Phishing HTML code before sending it to your client, 
 
 ### Processed headers
 
-Processed headers (more than **67+** headers are parsed):
+Processed headers (more than **76+** headers are parsed):
 
 - `X-forefront-antispam-report`
 - `X-exchange-antispam`
@@ -109,6 +109,16 @@ Processed headers (more than **67+** headers are parsed):
 - `X-microsoft-antispam-untrusted`
 - `X-sophos-senderhistory`
 - `X-sophos-rescan`
+- `X-MS-Exchange-CrossTenant-Id`
+- `X-OriginatorOrg`
+- `IronPort-Data`
+- `IronPort-HdrOrdr`
+- `X-DKIM`
+- `DKIM-Filter`
+- `X-SpamExperts-Class`
+- `X-SpamExperts-Evidence`
+- `X-Recommended-Action`
+- `X-AppInfo`
 
 
 Most of these headers are not fully documented, therefore the script is unable to pinpoint all the details, but at least it collects all I could find on them.
@@ -201,7 +211,7 @@ Having sent more than 60 mails already, this is what I can tell by now about Mic
 
         # Message contained <a href="https://something.com/file.html?parameter=https://another.com/website" 
         # - GET parameter with value, being a URL to another website
-        '45080400002' : 'Mail body contained <a> tag with URL containing GET parameter with value of another URL: ex. href="https://foo.bar/file?aaa=https://baz.xyz/"',
+        '45080400002' : 'Something about <a> tag\'s URL. Possibly it contained GET parameter with value of another URL: ex. href="https://foo.bar/file?aaa=https://baz.xyz/"',
 
         # Message contained <a> with href pointing to a file with dangerous extension, such as file.exe
         '460985005' : 'Mail body contained HTML <a> tag with href URL pointing to a file with dangerous extension (such as .exe)',
@@ -216,6 +226,29 @@ Having sent more than 60 mails already, this is what I can tell by now about Mic
         #
         '121216002' : 'First Hop MTA SMTP Server used as a SMTP Relay. It\'s known to originate e-mails, but here it acted as a Relay. Or maybe due to use of "with ESMTPSA" instead of ESMTPS?',
 
+        # Triggered on message with <a> added to HTML: <a href="https://support.spotify.com/is-en/">https://www.reddit.com/</a>
+        '966005' : 'Mail body contained link tag with potentially masqueraded URL: <a href="https://attacker.com">https://example.com</a>',
+
+        #
+        # Message1: GoPhish EC2 -> another EC2 with socat to smtp.gmail.com:587 (authenticated) -> Target
+        # Message2: GoPhish EC2 -> Gsuite -> Target
+        #
+        # Subject, mail body were exactly the same.
+        #
+        # Below two rules were added to the second message. My understanding is that they're somehow referring
+        # to the reputation of the first-hop server, maybe reverse-DNS resolution.
+        #
+        '5002400100002' : "(GUESSING) Somehow related to First Hop server reputation, it's reverse-PTR resolution or domain impersonation",
+        '58800400005'   : "(GUESSING) Somehow related to First Hop server reputation, it's reverse-PTR resolution or domain impersonation",
+
+        '19625305002' : '(GUESSING) Something to do with the HTML code and used tags/structures',
+        '43540500002' : '(GUESSING) Something to do with the HTML code and used tags/structures',
+
+        '460985005' : '(GUESSING) Something to do with either more-complex HTML code or with the <a> tag and its URL.',
+
+        # Triggered on an empty text message, subject "test" - that was marked with "Domain Impersonation", however 
+        # ForeFront Anti-Spam headers did not support that Domain Impersonation. Weird.
+        '22186003' : '(GUESSING) Something to do with either Text message (non-HTML) or probable Domain Impersonation'
     }
 ```
 
@@ -347,9 +380,22 @@ C:\> py decode-spam-headers.py -l tests
              77 - Other interesting headers
              78 - Security Appliances Spotted
              79 - Email Providers Infrastructure Clues
-             80 - X-Microsoft-Antispam-Message-Info
-             81 - Decoded Mail-encoded header values
+             80 - X-Microsoft-Antispam-Message-Info (use -a to show its results)
+             81 - Decoded Mail-encoded header values (use -a to show its results)
              82 - Header Containing Client IP
+             83 - Office365 Tenant ID
+             84 - Organization Name
+             85 - MS Defender For Office365 Safe Links Version
+             86 - Suspicious Words in Headers
+             87 - AWS SES Outgoing
+             88 - IronPort-Data
+             89 - IronPort-HdrOrder
+             90 - X-DKIM
+             91 - DKIM-Filter
+             92 - X-SpamExperts-Class
+             93 - X-SpamExperts-Evidence
+             94 - X-Recommended-Action
+             95 - X-AppInfo
 ```
 
 

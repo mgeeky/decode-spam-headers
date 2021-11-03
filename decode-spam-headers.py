@@ -79,6 +79,14 @@
 #   - X-sophos-rescan
 #   - X-MS-Exchange-CrossTenant-Id
 #   - X-OriginatorOrg
+#   - IronPort-Data
+#   - IronPort-HdrOrdr
+#   - X-DKIM
+#   - DKIM-Filter
+#   - X-SpamExperts-Class
+#   - X-SpamExperts-Evidence
+#   - X-Recommended-Action
+#   - X-AppInfo
 #
 # Usage:
 #   ./decode-spam-headers [options] <smtp-headers.txt>
@@ -91,6 +99,7 @@
 #         authored by: Nick Quinlan (nick@nicholasquinlan.com)
 #
 # Requirements:
+#   - python-dateutil
 #   - packaging
 #   - dnspython
 #   - requests
@@ -107,12 +116,20 @@ import textwrap
 import socket
 import time
 import base64
-from html import escape
 
-from dateutil import parser
+from html import escape
 from email import header as emailheader
 from datetime import *
 from dateutil.tz import *
+
+try:
+    from dateutil import parser
+except ImportError:
+    print('''
+[!] You need to install python-dateutil: 
+        # pip3 install python-dateutil
+''')
+    sys.exit(1)
 
 try:
     import packaging.version
@@ -133,7 +150,6 @@ except ImportError:
 ''')
     sys.exit(1)
 
-
 try:
     import dns.resolver
 
@@ -148,12 +164,14 @@ except ImportError:
 ''')
     sys.exit(1)
 
+
 options = {
     'debug': False,
     'verbose': False,
     'nocolor' : False,
     'log' : sys.stderr,
     'format' : 'text',
+    'dont_resolve' : False,
 }
 
 class Logger:
@@ -373,7 +391,7 @@ class SMTPHeadersAnalysis:
         'yandex', 'yandexbot', 'zillya', 'zonealarm', 'zscaler', '-sea-', 'perlmx', 'trustwave',
         'mailmarshal', 'tmase', 'startscan', 'fe-etp', 'jemd', 'suspicious', 'grey', 'infected', 'unscannable',
         'dlp-', 'sanitize', 'mailscan', 'barracuda', 'clearswift', 'messagelabs', 'msw-jemd', 'fe-etp', 'symc-ess',
-        'starscan', 'mailcontrol'
+        'starscan', 'mailcontrol', 'spamexpert'
     )
 
     Interesting_Headers = (
@@ -385,7 +403,7 @@ class SMTPHeadersAnalysis:
         'X-ICPINFO', 'x-locaweb-id', 'X-MC-User', 'mailersend', 'MailiGen', 'Mandrill', 'MarketoID', 'X-Messagebus-Info',
         'Mixmax', 'X-PM-Message-Id', 'postmark', 'X-rext', 'responsys', 'X-SFDC-User', 'salesforce', 'x-sg-', 'x-sendgrid-',
         'silverpop', '.mkt', 'X-SMTPCOM-Tracking-Number', 'X-vrfbldomain', 'verticalresponse',
-        'yesmail', 'logon', 'safelink', 'safeattach', 
+        'yesmail', 'logon', 'safelink', 'safeattach', 'appinfo',
     )
 
     Security_Appliances_And_Their_Headers = \
@@ -412,6 +430,7 @@ class SMTPHeadersAnalysis:
         ('MS Defender Advanced Threat Protection'                , 'X-MS.+-Atp'),
         ('MS Defender Advanced Threat Protection - Safe Links'   , '-ATPSafeLinks'),
         ('Cisco Advanced Malware Protection (AMP)'               , 'X-Amp-'),
+        ('n-able Mail Assure (SpamExperts)'                      , 'SpamExperts-'),
         ('MS ForeFront Anti-Spam'                                , 'X-Microsoft-Antispam'),
         ('MS ForeFront Anti-Spam'                                , 'X-Forefront-Antispam'),
     )
@@ -820,6 +839,17 @@ class SMTPHeadersAnalysis:
 
             }
         )
+    }
+
+    SpamExperts_Classes = {
+        'spam'   : logger.colored("system was not confident enough to block the message", "red"),
+        'unsure' : logger.colored("system was not confident enough to block the message", "magenta"),
+        'ham'    : logger.colored("", "yellow"),
+    }
+
+    SpamExperts_Actions = {
+        'accept' : logger.colored("Message is accepted.", "green"),
+        'drop'   : logger.colored("Message is dropped.", "red"),
     }
 
     SEA_Spam_Fields = {
@@ -1502,8 +1532,16 @@ class SMTPHeadersAnalysis:
             ('83', 'Office365 Tenant ID',                         self.testO365TenantID),
             ('84', 'Organization Name',                           self.testOrganizationIsO365Tenant),
             ('85', 'MS Defender For Office365 Safe Links Version',self.testSafeLinksKeyVer),
-            ('86', 'Suspicious Words in Subject line',            self.testSuspiciousWordsInSubject),
-            ('87', 'Suspicious Words in Thread-Topic line',       self.testSuspiciousWordsInThreadTopic),
+            ('87', 'AWS SES Outgoing',                            self.testXSESOutgoing),
+            ('88', 'IronPort-Data',                               self.testIronPortData),
+            ('89', 'IronPort-HdrOrder',                           self.testIronPortHdrOrdr),
+            ('90', 'X-DKIM',                                      self.testXDKIM),
+            ('91', 'DKIM-Filter',                                 self.testDKIMFilter),
+            ('92', 'X-SpamExperts-Class',                         self.testXSpamExpertsClass),
+            ('93', 'X-SpamExperts-Evidence',                      self.testXSpamExpertsEvidence),
+            ('94', 'X-Recommended-Action',                        self.testXRecommendedAction),
+            ('95', 'X-AppInfo',                                   self.testXAppInfo),
+            
 
             #
             # These tests shall be the last ones.
@@ -1523,6 +1561,7 @@ class SMTPHeadersAnalysis:
 
         testsReturningArray = (
             ('82', 'Header Containing Client IP',                 self.testAnyOtherIP),
+            ('86', 'Suspicious Words in Headers',                 self.testSuspiciousWordsInHeaders),
         )
 
         ids = set()
@@ -1552,12 +1591,45 @@ class SMTPHeadersAnalysis:
 
     @staticmethod
     def resolveAddress(addr):
+        return SMTPHeadersAnalysis.gethostbyaddr(addr)
+
+    resolved = {}
+
+    @staticmethod
+    def gethostbyaddr(addr, important = True):
+        if not important or options['dont_resolve']:
+            return ''
+
+        if addr in SMTPHeadersAnalysis.resolved.keys():
+            return SMTPHeadersAnalysis.resolved[addr]
+
         try:
             res = socket.gethostbyaddr(addr)
-            return ', '.join([x for x in res if len(x) > 0])
-
+            if len(res) > 0:
+                SMTPHeadersAnalysis.resolved[addr] = res[0]
+                return res[0]
         except:
+            pass
+
+        return ''
+
+    @staticmethod
+    def gethostbyname(name, important = True):
+        if not important or options['dont_resolve']:
             return ''
+
+        if name.lower() in SMTPHeadersAnalysis.resolved.keys():
+            return SMTPHeadersAnalysis.resolved[name]
+            
+        try:
+            res = socket.gethostbyname(name)
+            if len(res) > 0:
+                SMTPHeadersAnalysis.resolved[name.lower()] = res
+                return res
+        except:
+            pass
+
+        return ''
             
     @staticmethod
     def parseExchangeVersion(lookup):
@@ -1603,6 +1675,13 @@ class SMTPHeadersAnalysis:
 
         for (num, header, value) in self.headers:
             if header.lower() == _header.lower():
+                m1 = re.search(r'\=\?[a-z0-9\-]+\?Q\?', value, re.I)
+                if m1:
+                    v1d = emailheader.decode_header(value)[0][0]
+                    if type(v1d) == bytes:
+                        v1d = v1d.decode()
+                    value = v1d
+
                 return (num, header, value)
 
         similar_headers = (
@@ -1616,6 +1695,12 @@ class SMTPHeadersAnalysis:
 
                 for (num, header, value) in self.headers:
                     if header.lower() == _header.lower():
+                        m1 = re.search(r'\=\?[a-z0-9\-]+\?Q\?', value, re.I)
+                        if m1:
+                            v1d = emailheader.decode_header(value)[0][0]
+                            if type(v1d) == bytes:
+                                v1d = v1d.decode()
+                            value = v1d
                         return (num, header, value)
 
         return (-1, '', '')
@@ -1837,7 +1922,7 @@ Results will be unsound. Make sure you have pasted your headers with correct spa
             return ''
 
         parts = fqdn.split('.')
-        return '.'.join(parts[-2:])
+        return '.'.join(parts[-2:]).replace('<','').replace('>','')
 
     @staticmethod
     def decodeSpamcause(msg):
@@ -2366,6 +2451,82 @@ Results will be unsound. Make sure you have pasted your headers with correct spa
         self.securityAppliances.add('Proofpoint Email Protection')
         return self._parseProofpoint(result, '', num, header, value)
 
+    def testXSpamExpertsClass(self):
+        (num, header, value) = self.getHeader('X-SpamExperts-Class')
+        if num == -1: return []
+
+        result = f'- n-able Mail Assure (SpamExperts) Class: {self.logger.colored(value, "yellow")}\n'
+
+        if value.lower() in SMTPHeadersAnalysis.SpamExperts_Classes.keys():
+            result += f'\n\t- {value}: ' + SMTPHeadersAnalysis.SpamExperts_Classes[value.lower()] + '\n'
+
+        self.securityAppliances.add('n-able Mail Assure (SpamExperts)')
+        
+        return {
+            'header': header,
+            'value' : value,
+            'analysis' : result,
+            'description' : '',
+        }
+
+    def testXSpamExpertsEvidence(self):
+        (num, header, value) = self.getHeader('X-SpamExperts-Evidence')
+        if num == -1: return []
+
+        result = f'- n-able Mail Assure (SpamExperts) Evidence:\n\t- {self.logger.colored(value, "magenta")}\n'
+
+        m = re.match(r'.+\s+\(([\.\d]+)\).*', value)
+        if m:
+            try:
+                score = float(m.group(1))
+                col = 'yellow'
+                msg = ''
+                
+                if score < 0.5:
+                    col = 'green'
+                    msg = self.logger.colored('Message not quarantined and considered harmless.', col)
+
+                elif score < 0.9:
+                    col = 'yellow'
+                    msg = self.logger.colored('Message not quarantined but raised some suspicions', col)
+
+                else:
+                    col = 'red'
+                    msg = self.logger.colored('Message quarantined.', col)
+
+                result += f'\t- Score:   {self.logger.colored(score, col)}\n'
+                result += f'\t- Verdict: {msg}\n'
+
+            except:
+                pass
+            
+        self.securityAppliances.add('n-able Mail Assure (SpamExperts)')
+        
+        return {
+            'header': header,
+            'value' : value,
+            'analysis' : result,
+            'description' : '',
+        }
+
+    def testXRecommendedAction(self):
+        (num, header, value) = self.getHeader('X-Recommended-Action')
+        if num == -1: return []
+
+        result = f'- n-able Mail Assure (SpamExperts) Recommended Action on e-mail: {self.logger.colored(value, "yellow")}\n'
+
+        if value.lower() in SMTPHeadersAnalysis.SpamExperts_Actions.keys():
+            result += f'\n\t- {value}: ' + SMTPHeadersAnalysis.SpamExperts_Actions[value.lower()] + '\n'
+
+        self.securityAppliances.add('n-able Mail Assure (SpamExperts)')
+        
+        return {
+            'header': header,
+            'value' : value,
+            'analysis' : result,
+            'description' : '',
+        }
+
     def testXTMVersion(self):
         (num, header, value) = self.getHeader('X-TMASE-Version')
         if num == -1: return []
@@ -2440,17 +2601,24 @@ Results will be unsound. Make sure you have pasted your headers with correct spa
 
         return self._parseSpamAssassinStatus(result, '', num, header, value, thresholds)
 
-    def testSuspiciousWordsInSubject(self):
-        (num, header, value) = self.getHeader('Subject')
-        if num == -1: return []
+    def testSuspiciousWordsInHeaders(self):
+        outputs = []
+        headers = set({
+            'From', 'To', 'Subject', 'Topic', 
+        })
 
-        return self._findSuspiciousWords(num, header, value)
+        for (num, header, value) in self.headers:
+            #if header.lower().endswith('-to'): headers.add(header)
+            #if header.lower().endswith('-topic'): headers.add(header)
+            #if header.lower().endswith('-subject'): headers.add(header)
+            headers.add(header.lower())
 
-    def testSuspiciousWordsInThreadTopic(self):
-        (num, header, value) = self.getHeader('Thread-Topic')
-        if num == -1: return []
+        for header in headers:
+            (num, hdr, value) = self.getHeader(header)
+            if num != -1:
+                outputs.append(self._findSuspiciousWords(num, hdr, value))
 
-        return self._findSuspiciousWords(num, header, value)
+        return outputs
 
     def _findSuspiciousWords(self, num, header, value):
         foundWords = set()
@@ -2459,34 +2627,21 @@ Results will be unsound. Make sure you have pasted your headers with correct spa
 
         result = ''
 
+        false_positives = (
+            'unsubscribe',
+        )
+
         for title, words in SMTPHeadersAnalysis.Suspicious_Words.items():
             found = set()
 
             for word in words[1]:
-                if word.lower() in foundWords: 
+                if word.lower() in foundWords or word.lower() in false_positives: 
                     continue
 
                 totalChecked += 1
                 if re.search(r'\b' + re.escape(word) + r'\b', value, re.I):
                     found.add(word.lower())
-
                     foundWords.add(word.lower())
-                    pos = value.find(word.lower())
-
-                    if pos != -1:
-                        line = ''
-                        N = 50
-                        if pos > N:
-                            line = value[pos-N:pos]
-
-                        line += value[pos:pos+N]
-                        pos2 = line.find(word.lower())
-
-                        line = line[:pos2] + logger.colored(line[pos2:pos2+len(word)], "red") + line[pos2+len(word):]
-                        line = line.replace('\n', '')
-                        line = re.sub(r' {2,}', '  ', line)
-
-                        context += '\n' + line + '\n'
 
             if len(found) > 0:
                 totalFound += len(found)
@@ -3027,6 +3182,17 @@ Results will be unsound. Make sure you have pasted your headers with correct spa
         self.securityAppliances.add('Cisco IronPort')
         return self._originatingIPTest(result, '', num, header, value)
 
+    def testXSESOutgoing(self):
+        (num, header, value) = self.getHeader('X-SES-Outgoing')
+        if num == -1: return []
+
+        result = f'- E-Mail sent through Amazon SES. Outgoing: \n\n'
+        vals = SMTPHeadersAnalysis.flattenLine(value).replace(' ', '').split('-')
+
+        result += f'\t- Date: {vals[0]}'
+
+        return self._originatingIPTest(result, '', num, header, vals[1])
+
     def _originatingIPTest(self, topicLine, description, num, header, value):
         result = ''
 
@@ -3198,6 +3364,50 @@ Results will be unsound. Make sure you have pasted your headers with correct spa
             result += f'     {value}: ' + SMTPHeadersAnalysis.Spam_Diagnostics_Metadata[value.strip()] + '\n'
         else:
             result += f'     {value}\n'
+
+        return {
+            'header' : header,
+            'value': value,
+            'analysis' : result,
+            'description' : '',
+        }
+
+    def testIronPortHdrOrdr(self):
+        (num, header, value) = self.getHeader('IronPort-HdrOrdr')
+        if num == -1: return []
+
+        self.securityAppliances.add('Cisco IronPort / Email Security Appliance (ESA)')
+        
+        if self.decode_all:
+            dumped = SMTPHeadersAnalysis.hexdump(SMTPHeadersAnalysis.safeBase64Decode(value))
+
+            result = f'- Cisco IronPort Data encrypted blob:\n\n'
+            result += dumped + '\n'
+
+        else:
+            result = f'- Cisco IronPort Data encrypted blob. Use --decode-all to print its hexdump.'
+        
+        return {
+            'header' : header,
+            'value': value,
+            'analysis' : result,
+            'description' : '',
+        }
+
+    def testIronPortData(self):
+        (num, header, value) = self.getHeader('IronPort-Data')
+        if num == -1: return []
+
+        self.securityAppliances.add('Cisco IronPort / Email Security Appliance (ESA)')
+
+        if self.decode_all:
+            dumped = SMTPHeadersAnalysis.hexdump(SMTPHeadersAnalysis.safeBase64Decode(value))
+
+            result = f'- Cisco IronPort Data encrypted blob:\n\n'
+            result += dumped + '\n'
+
+        else:
+            result = f'- Cisco IronPort Data encrypted blob. Use --decode-all to print its hexdump.'        
 
         return {
             'header' : header,
@@ -3601,7 +3811,7 @@ Src: https://www.cisco.com/c/en/us/td/docs/security/esa/esa11-1/user_guide/b_ESA
                 out = self._parseAsteriskRiskScore('', '', num, header, value)
                 headers.append(header)
                 values.append(value)
-                SMTPHeadersAnalysis.Handled_Spam_Headers.append(header)
+                SMTPHeadersAnalysis.Handled_Spam_Headers.append(header.lower())
 
                 tmp += f'\t({num0:02}) {self.logger.colored("Header", "magenta")}:   {header}\n'
                 tmp += out['analysis']
@@ -3651,6 +3861,7 @@ Src: https://www.cisco.com/c/en/us/td/docs/security/esa/esa11-1/user_guide/b_ESA
                     tmp += f'\t     Keyword:  {dodgy}\n'
                     tmp += f'\t     Value:    {value[:120]}\n\n'
                     shown.add(header)
+                    SMTPHeadersAnalysis.Handled_Spam_Headers.append(header.lower())
                     break
 
                 elif dodgy in value.lower() and header.lower():
@@ -3675,6 +3886,7 @@ Src: https://www.cisco.com/c/en/us/td/docs/security/esa/esa11-1/user_guide/b_ESA
                     tmp += f'\t     Keyword:  {dodgy}\n'
                     tmp += f'\t     {self.logger.colored("Value", "magenta")}:\n\n{ctx}\n\n'
                     shown.add(header)
+                    SMTPHeadersAnalysis.Handled_Spam_Headers.append(header.lower())
                     break
 
         if len(tmp) > 0:
@@ -3809,7 +4021,7 @@ Src: https://www.cisco.com/c/en/us/td/docs/security/esa/esa11-1/user_guide/b_ESA
         if num == -1: return []
 
         result = ''
-        m = re.search(r'<([^<@\s]+)@([^\s]+)>', value)
+        m = re.search(r'<?([^<@\s]+)@([^\s]+)>?', value)
         domain = ''
 
         if m and len(self.received_path) < 3:
@@ -3827,16 +4039,16 @@ Src: https://www.cisco.com/c/en/us/td/docs/security/esa/esa11-1/user_guide/b_ESA
         firstSenderAddr = ''
 
         try:
-            mailDomainAddr = socket.gethostbyname(domain)
-            revMailDomain = socket.gethostbyaddr(mailDomainAddr)[0]
+            mailDomainAddr = SMTPHeadersAnalysis.gethostbyname(domain)
+            revMailDomain = SMTPHeadersAnalysis.gethostbyaddr(mailDomainAddr)
 
             if(len(firstHop['ip'])) > 0 and len(revFirstSenderDomain) == 0:
-                revFirstSenderDomain = socket.gethostbyaddr(firstHop['ip'])[0]
+                revFirstSenderDomain = SMTPHeadersAnalysis.gethostbyaddr(firstHop['ip'])
 
             if(len(firstHop['host'])) > 0:
-                firstSenderAddr = socket.gethostbyname(firstHop['host'])
+                firstSenderAddr = SMTPHeadersAnalysis.gethostbyname(firstHop['host'])
                 if len(revFirstSenderDomain) == 0:
-                    revFirstSenderDomain = socket.gethostbyaddr(firstSenderAddr)[0]
+                    revFirstSenderDomain = SMTPHeadersAnalysis.gethostbyaddr(firstSenderAddr)
         except: 
             pass
 
@@ -3845,6 +4057,9 @@ Src: https://www.cisco.com/c/en/us/td/docs/security/esa/esa11-1/user_guide/b_ESA
 
         if len(senderDomain) == 0: senderDomain = domain
         if len(firstHopDomain1) == 0: firstHopDomain1 = firstHop["host"]
+
+        senderDomain = senderDomain.replace('<','').replace('>','').strip()
+        firstHopDomain1 = firstHopDomain1.replace('<','').replace('>','').strip()
 
         result += f'\t- Mail From: <{email}>\n\n'
         result += f'\t- Mail Domain: {domain}\n'
@@ -3863,7 +4078,7 @@ Src: https://www.cisco.com/c/en/us/td/docs/security/esa/esa11-1/user_guide/b_ESA
                 if domain.endswith('.'): domain = domain[:-1]
                 response = dns.resolver.resolve(domain, 'TXT')
 
-            except (dns.resolver.NXDOMAIN, dns.resolver.NoAnswer) as e:
+            except Exception as e:
                 response = []
 
             spf = False
@@ -4145,9 +4360,9 @@ Src: https://www.cisco.com/c/en/us/td/docs/security/esa/esa11-1/user_guide/b_ESA
 
             if obj['host'] == '' and obj['ip'] != '':
                 try:
-                    res = socket.gethostbyaddr(obj['ip'])
+                    res = SMTPHeadersAnalysis.gethostbyaddr(obj['ip'])
                     if len(res) > 0:
-                        obj['host'] = res[0]
+                        obj['host'] = res
                 except:
                     pass
 
@@ -4160,9 +4375,9 @@ Src: https://www.cisco.com/c/en/us/td/docs/security/esa/esa11-1/user_guide/b_ESA
             if len(obj['host2']) == 0:
                 if obj['ip'] != None and len(obj['ip']) > 0:
                     try:
-                        res = socket.gethostbyaddr(obj['ip'])
+                        res = SMTPHeadersAnalysis.gethostbyaddr(obj['ip'])
                         if len(res) > 0:
-                            obj['host2'] = res[0]
+                            obj['host2'] = res
                     except:
                         obj['host2'] = self.logger.colored('NXDomain', 'red')
 
@@ -4270,7 +4485,7 @@ Src: https://www.cisco.com/c/en/us/td/docs/security/esa/esa11-1/user_guide/b_ESA
             if obj and (obj['ip'] == None or len(obj['ip']) == 0):
                 if obj['host'] != None and len(obj['host']) > 0:
                     try:
-                        obj['ip'] = socket.gethostbyname(obj['host'])
+                        obj['ip'] = SMTPHeadersAnalysis.gethostbyname(obj['host'])
                     except:
                         pass
 
@@ -4867,6 +5082,38 @@ Src: https://www.cisco.com/c/en/us/td/docs/security/esa/esa11-1/user_guide/b_ESA
             'description' : '',
         }
 
+    def testXDKIM(self):
+        (num, header, value) = self.getHeader('X-DKIM')
+        if num == -1: return []
+
+        vvv = self.logger.colored(value, 'magenta')
+        self.securityAppliances.add(value)
+        result = f'- X-DKIM header was present and contained value: {vvv}\n'
+        result +  '  This header typically indicates DKIM verification filter version.'
+
+        return {
+            'header' : header,
+            'value': value,
+            'analysis' : result,
+            'description' : '',
+        }
+
+    def testDKIMFilter(self):
+        (num, header, value) = self.getHeader('DKIM-Filter')
+        if num == -1: return []
+
+        vvv = self.logger.colored(value, 'magenta')
+        self.securityAppliances.add(value)
+        result = f'- DKIM-Filter header was present and contained value: {vvv}\n'
+        result +  '  This header typically indicates DKIM verification filter version.'
+
+        return {
+            'header' : header,
+            'value': value,
+            'analysis' : result,
+            'description' : '',
+        }
+
     def testXMailer(self):
         (num, header, value) = self.getHeader('X-Mailer')
         if num == -1: return []
@@ -4874,6 +5121,22 @@ Src: https://www.cisco.com/c/en/us/td/docs/security/esa/esa11-1/user_guide/b_ESA
         vvv = self.logger.colored(value, 'magenta')
         self.securityAppliances.add(value)
         result = f'- X-Mailer header was present and contained value: {vvv}\n'
+        result +  '  This header typically indicates sending client\'s name (similar to User-Agent).'
+
+        return {
+            'header' : header,
+            'value': value,
+            'analysis' : result,
+            'description' : '',
+        }
+
+    def testXAppInfo(self):
+        (num, header, value) = self.getHeader('X-AppInfo')
+        if num == -1: return []
+
+        vvv = self.logger.colored(value, 'magenta')
+        self.securityAppliances.add(value)
+        result = f'- X-AppInfo header was present and contained value: {vvv}\n'
         result +  '  This header typically indicates sending client\'s name (similar to User-Agent).'
 
         return {
@@ -5162,10 +5425,7 @@ Src: https://www.cisco.com/c/en/us/td/docs/security/esa/esa11-1/user_guide/b_ESA
 
                 if self.resolve:
                     self.logger.dbg(f'testResolveIntoIP: Resolving {d}...')
-                    out = socket.gethostbyname(d)
-
-                    if type(out) == list:
-                        out = out[0]
+                    out = SMTPHeadersAnalysis.gethostbyname(d)
 
                     tmp += f'\t- Found Domain:   {d2}\n\t\t- that resolves to: {out}\n'
                 else:
@@ -5239,6 +5499,7 @@ def opts(argv):
     tst.add_argument('-i', '--include-tests', default='', metavar='tests', help='Comma-separated list of test IDs to run. Ex. --include-tests 1,3,7')
     tst.add_argument('-e', '--exclude-tests', default='', metavar='tests', help='Comma-separated list of test IDs to skip. Ex. --exclude-tests 1,3,7')
     tst.add_argument('-r', '--resolve', default=False, action='store_true', help='Resolve IPv4 addresses / Domain names.')
+    tst.add_argument('-R', '--dont-resolve', default=False, action='store_true', help='Do not resolve anything.')
     tst.add_argument('-a', '--decode-all', default=False, action='store_true', help='Decode all =?us-ascii?Q? mail encoded messages and print their contents.')
 
     args = o.parse_args()
@@ -5356,9 +5617,10 @@ def main(argv):
         an = SMTPHeadersAnalysis(logger)
 
         (a, b, c) = an.getAllTests()
-        tests = a+b+c
+        d = a+b+c
+        e = [x for x in sorted(d, key=lambda item: int(item[0]))]
 
-        for test in tests:
+        for test in e:
             (testId, testName, testFunc) = test
 
             if test in b:
@@ -5436,7 +5698,6 @@ def main(argv):
 Experiencing a bad-looking output with unprintable characters? 
 Use -N flag to disable console colors, or switch your console for better UI experience.
 ''')
-
 
 if __name__ == '__main__':
     main(sys.argv)
