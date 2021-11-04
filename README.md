@@ -648,6 +648,13 @@ ANALYSIS:
 ```
 
 
+---
+
+### Known Issues
+
+- HTML formatted output (when used with colors) is not working at the moment. Need to rewrite loggic that translates ANSI colors into HTML colors.
+- `getOffice365TenantNameById(tenantID)` method is not yet finished, I know of a few ways to map Office365 Tenant GUID into Tenant Name but couldn't yet establish a stable way to do so.
+
 
 ---
 
