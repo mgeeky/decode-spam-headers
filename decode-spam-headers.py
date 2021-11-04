@@ -88,6 +88,10 @@
 #   - X-Recommended-Action
 #   - X-AppInfo
 #   - X-TM-AS-MatchedID
+#   - X-MS-Exchange-EnableFirstContactSafetyTip
+#   - X-MS-Exchange-Organization-BypassFocusedInbox
+#   - X-MS-Exchange-SkipListedInternetSender
+#   - X-MS-Exchange-ExternalOriginalInternetSender
 #
 # Usage:
 #   ./decode-spam-headers [options] <smtp-headers.txt>
@@ -425,13 +429,17 @@ class SMTPHeadersAnalysis:
         ('Cisco IronPort / Email Security Appliance (ESA)'       , 'X-SBRS'),
         ('Cisco IronPort'                                        , 'X-IronPort-'),
         ('Exchange Online Protection'                            , 'X-EOP'),
+        ('Exchange Online Protection'                            , 'X-MS-Exchange-'),
+        ('Exchange Online Protection - First Contact Safety'     , 'X-.+-EnableFirstContactSafetyTip'),
+        ('Exchange Online Protection - Enhanced Filtering'       , 'X-.+-SkipListedInternetSender'),
+        ('Exchange Online Protection - Enhanced Filtering'       , 'X-.+-ExternalOriginalInternetSender'),
         ('Exchange Server 2016 Anti-Spam'                        , 'SpamDiagnostic'),
         ('FireEye Email Security Solution'                       , 'X-FE-'),
         ('FireEye Email Security Solution'                       , 'X-FireEye'),
         ('Mimecast'                                              , 'X-Mimecast-'),
         ('MS Defender Advanced Threat Protection - Safe Links'   , '-ATPSafeLinks'),
         ('MS Defender Advanced Threat Protection'                , 'X-MS.+-Atp'),
-        ('MS Defender For Office365'                             , '-Safelinks'),
+        ('MS Defender for Office365'                             , '-Safelinks'),
         ('MS ForeFront Anti-Spam'                                , 'X-Forefront-Antispam'),
         ('MS ForeFront Anti-Spam'                                , 'X-Microsoft-Antispam'),
         ('n-able Mail Assure (SpamExperts)'                      , 'SpamExperts-'),
@@ -929,10 +937,11 @@ class SMTPHeadersAnalysis:
         ),
 
         'OFR' : (
-            'Folder Rules applied to this Message',
+            'Outlook Filter Rules applied on this Message',
             {
                 'ExclusiveSettings' : '',
                 'CustomRules' : logger.colored('An existing folder move rule was applied on this message.', 'yellow'),
+                'SpamFilterAuthJ': logger.colored('This message was marked as spam using a junk filter other than the Outlook Junk Email filter.', 'yellow'),
             } 
         ),
 
@@ -1244,6 +1253,32 @@ class SMTPHeadersAnalysis:
         )
     }
 
+    Time_Zone_Acronyms = (
+        'A', 'ACDT', 'ACST', 'ACT', 'ACT', 'ACWST', 'ADST', 'ADST', 'ADT', 'ADT', 'AEDT', 'AEST', 'AET', 'AET', 'AFT', 'AKDT', 'AKST',
+        'ALMT', 'AMDT', 'AMST', 'AMST', 'AMT', 'AMT', 'ANAST', 'ANAT', 'AoE', 'AQTT', 'ART', 'AST', 'AST', 'AST', 'AST', 'AST', 'AST',
+        'AST', 'AT', 'AT', 'AT', 'AWDT', 'AWST', 'AZODT', 'AZOST', 'AZOST', 'AZOT', 'AZST', 'AZT', 'B', 'BDST', 'BDT', 'BDT', 'BNT',
+        'BOT', 'BRST', 'BRT', 'BST', 'BST', 'BST', 'BST', 'BST', 'BT', 'BT', 'BTT', 'C', 'CAST', 'CAT', 'CCT', 'CDST', 'CDST', 'CDT',
+        'CDT', 'CDT', 'CDT', 'CEDT', 'CEST', 'CET', 'CET', 'CHADT', 'CHAST', 'CHODST', 'CHODT', 'CHOST', 'CHOT', 'ChST', 'CHUT', 
+        'CIDST', 'CIST', 'CIT', 'CKT', 'CLDT', 'CLST', 'CLST', 'CLT', 'COT', 'CST', 'CST', 'CST', 'CST', 'CST', 'CT', 'CT', 'CT',
+        'CVT', 'CXT', 'D', 'DAVT', 'DDUT', 'E', 'EADT', 'EASST', 'EAST', 'EAT', 'EAT', 'ECST', 'ECT', 'ECT', 'EDST', 'EDST', 'EDT',
+        'EDT', 'EDT', 'EEDT', 'EEST', 'EET', 'EFATE', 'EGST', 'EGST', 'EGT', 'EGT', 'EST', 'EST', 'ET', 'ET', 'ET', 'F', 'FET', 
+        'FJDT', 'FJST', 'FJT', 'FKDT', 'FKST', 'FKST', 'FKT', 'FNT', 'G', 'GALT', 'GAMT', 'GAMT', 'GET', 'GFT', 'GILT', 'GMT', 
+        'GMT', 'GST', 'GST', 'GST', 'GT', 'GYT', 'H', 'HAA', 'HAC', 'HADT', 'HAE', 'HAP', 'HAR', 'HAST', 'HAT', 'HDT', 'HKT', 
+        'HLV', 'HNA', 'HNC', 'HNE', 'HNP', 'HNR', 'HNT', 'HOVDST', 'HOVDT', 'HOVST', 'HOVT', 'HST', 'I', 'ICT', 'IDT', 'IDT', 
+        'Indian', 'IOT', 'IRDT', 'IRKST', 'IRKT', 'IRST', 'IRST', 'IST', 'IST', 'IST', 'IST', 'IST', 'IT', 'IT', 'JST', 'K', 'KGT',
+        'KIT', 'KOST', 'KRAST', 'KRAT', 'KST', 'KST', 'KT', 'KUYT', 'L', 'LHDT', 'LHST', 'LINT', 'M', 'MAGST', 'MAGST', 'MAGT', 
+        'MAGT', 'MART', 'MAWT', 'MCK', 'MDST', 'MDT', 'MESZ', 'MEZ', 'MHT', 'MMT', 'Moscow', 'MSD', 'MSK', 'MST', 'MST', 'MT', 
+        'MT', 'MUT', 'MVT', 'MYT', 'N', 'NACDT', 'NACST', 'NAEDT', 'NAEST', 'NAMDT', 'NAMST', 'NAPDT', 'NAPST', 'NCT', 'NDT', 'NFDT',
+        'NFDT', 'NFT', 'NFT', 'NOVST', 'NOVST', 'NOVT', 'NOVT', 'NPT', 'NRT', 'NST', 'NUT', 'NZDT', 'NZST', 'O', 'OESZ', 'OEZ', 
+        'OMSST', 'OMSST', 'OMST', 'OMST', 'OMST', 'ORAT', 'P', 'Pacifi', 'PDST', 'PDT', 'PET', 'PETST', 'PETT', 'PETT', 'PGT', 
+        'PHOT', 'PHT', 'PKT', 'PKT', 'PMDT', 'PMST', 'PONT', 'PST', 'PST', 'PST', 'PT', 'PT', 'PT', 'PWT', 'PYST', 'PYST', 'PYT', 
+        'PYT', 'Q', 'QYZT', 'R', 'RET', 'ROTT', 'S', 'SAKT', 'SAMST', 'SAMT', 'SAMT', 'SAST', 'SAST', 'SBT', 'SBT', 'SCT', 'SGT', 
+        'SRET', 'SRT', 'SST', 'SST', 'ST', 'SYOT', 'T', 'TAHT', 'TFT', 'TJT', 'TKT', 'TLT', 'TMT', 'TOST', 'TOT', 'TRT', 'TVT', 
+        'U', 'ULAST', 'ULAST', 'ULAT', 'ULAT', 'UTC', 'UYST', 'UYT', 'UZT', 'V', 'VET', 'VLAST', 'VLAT', 'VOST', 'VUT', 'W', 
+        'WAKT', 'WARST', 'WAST', 'WAT', 'WAT', 'WDT', 'WEDT', 'WEST', 'WESZ', 'WET', 'WEZ', 'WFT', 'WGST', 'WGST', 'WGT', 'WGT',
+        'WIB', 'WIB', 'WIT', 'WIT', 'WITA', 'WITA', 'WST', 'WST', 'WST', 'WST', 'WT', 'WT', 'X', 'Y', 'YAKST', 'YAKT', 'YAPT',
+        'YEKST', 'YEKT', 'Z',
+    )
 
     # https://docs.microsoft.com/en-us/exchange/new-features/build-numbers-and-release-dates?view=exchserver-2019
     Exchange_Versions = (
@@ -1547,7 +1582,7 @@ class SMTPHeadersAnalysis:
 
             ('83', 'Office365 Tenant ID',                         self.testO365TenantID),
             ('84', 'Organization Name',                           self.testOrganizationIsO365Tenant),
-            ('85', 'MS Defender For Office365 Safe Links Version',self.testSafeLinksKeyVer),
+            ('85', 'MS Defender for Office365 Safe Links Version',self.testSafeLinksKeyVer),
             ('87', 'AWS SES Outgoing',                            self.testXSESOutgoing),
             ('88', 'IronPort-Data',                               self.testIronPortData),
             ('89', 'IronPort-HdrOrder',                           self.testIronPortHdrOrdr),
@@ -1559,6 +1594,10 @@ class SMTPHeadersAnalysis:
             ('95', 'X-AppInfo',                                   self.testXAppInfo),
             ('96', 'X-Spam',                                      self.testXSpam),
             ('97', 'X-TM-AS-MatchedID',                           self.testXTMASMatchedID),
+            ('99', 'Office365 First Contact Safety Tip',          self.testO365FirstContactSafetyTip),
+            ('100','EOP - Bypass Focused Inbox',                  self.testBypassFocusedInbox),
+            ('101','EOP - Enhanced Filtering - SkipListedInternetSender', self.testO365EnhancedFilteringSkipListedInternetSender),
+            ('102','EOP - Enhanced Filtering - ExternalOriginalInternetSender', self.testO365EnhancedFilteringExternalOriginalInternetSender),
             
 
             #
@@ -1616,7 +1655,7 @@ class SMTPHeadersAnalysis:
 
     @staticmethod
     def gethostbyaddr(addr, important = True):
-        if not important or options['dont_resolve']:
+        if not important or options['dont_resolve'] or len(addr) == 0:
             return ''
 
         if addr in SMTPHeadersAnalysis.resolved.keys():
@@ -1637,7 +1676,7 @@ class SMTPHeadersAnalysis:
 
     @staticmethod
     def gethostbyname(name, important = True):
-        if not important or options['dont_resolve']:
+        if not important or options['dont_resolve'] or len(name) == 0:
             return ''
 
         if name.lower() in SMTPHeadersAnalysis.resolved.keys():
@@ -2163,8 +2202,8 @@ Results will be unsound. Make sure you have pasted your headers with correct spa
         if num == -1: return []
 
         value = value.strip()
-        self.securityAppliances.add('MS Defender For Office365 - Safe Links')
-        result = f'- Microsoft Defender For Office365 (MDO) Safe Links was used in key version: {self.logger.colored(value, "green")}\n'
+        self.securityAppliances.add('MS Defender for Office365 - Safe Links')
+        result = f'- Microsoft Defender for Office365 (MDO) Safe Links was used in key version: {self.logger.colored(value, "green")}\n'
         
         
         return {
@@ -2342,7 +2381,7 @@ Results will be unsound. Make sure you have pasted your headers with correct spa
                         if pos != -1:
                             val = value1[:pos] + self.logger.colored(value1[pos:pos+len(value)], 'yellow') + value1[pos+len(value):]
 
-                        tmp += f'\t- ({num0:02}) Header: {header1}\n'
+                        tmp += f'\t- ({num0:02}) Header: {self.logger.colored(header1, "magenta")}\n'
                         tmp += f'\t        Value: {val}\n\n'
 
                 if len(tmp) > 0:
@@ -2397,7 +2436,7 @@ Results will be unsound. Make sure you have pasted your headers with correct spa
                     if pos != -1:
                         val = value1[:pos] + self.logger.colored(value1[pos:pos+len(value)], 'yellow') + value1[pos+len(value):]
 
-                    tmp += f'\t- ({num0:02}) Header: {header1}\n'
+                    tmp += f'\t- ({num0:02}) Header: {self.logger.colored(header1, "magenta")}\n'
                     tmp += f'\t        Value: {val}\n\n'
 
             if len(tmp) > 0:
@@ -2664,9 +2703,15 @@ Results will be unsound. Make sure you have pasted your headers with correct spa
                     continue
 
                 totalChecked += 1
-                if re.search(r'\b' + re.escape(word) + r'\b', value, re.I):
-                    found.add(word.lower())
-                    foundWords.add(word.lower())
+                m = re.search(r'\b(' + re.escape(word) + r')\b', value, re.I)
+                if m:
+                    w = m.group(1)
+                    found.add(w)
+                    foundWords.add(w)
+
+                    pos = value.lower().find(w.lower())
+                    if pos != -1:
+                        value = value[:pos] + self.logger.colored(w, "red") + value[pos + len(w):]
 
             if len(found) > 0:
                 totalFound += len(found)
@@ -4251,7 +4296,7 @@ Src: https://www.cisco.com/c/en/us/td/docs/security/esa/esa11-1/user_guide/b_ESA
         for prop in props:
             if prop in SMTPHeadersAnalysis.ATP_Message_Properties.keys():
                 result += f'\t- ' + self.logger.colored(SMTPHeadersAnalysis.ATP_Message_Properties[prop], 'magenta') + '\n'
-                self.securityAppliances.add('MS Defender For Office365 - ' + SMTPHeadersAnalysis.ATP_Message_Properties[prop])
+                self.securityAppliances.add('MS Defender for Office365 - ' + SMTPHeadersAnalysis.ATP_Message_Properties[prop])
 
         return {
             'header' : header,
@@ -4470,6 +4515,9 @@ Src: https://www.cisco.com/c/en/us/td/docs/security/esa/esa11-1/user_guide/b_ESA
                 if skip:
                     continue
 
+            if v in SMTPHeadersAnalysis.Time_Zone_Acronyms:
+                continue
+
             obj['extra'].append(v)
 
         tldextracted = tldextract.extract(obj['host'])
@@ -4534,7 +4582,7 @@ Src: https://www.cisco.com/c/en/us/td/docs/security/esa/esa11-1/user_guide/b_ESA
 
         if n1 != -1:
             path.append({
-            'host' : self.logger.colored(v1, 'green'),
+            'host' : 'From: ' + self.logger.colored(v1, 'green'),
             'host2' : '',
             'timestamp' : None,
             'ip' : '',
@@ -4580,7 +4628,7 @@ Src: https://www.cisco.com/c/en/us/td/docs/security/esa/esa11-1/user_guide/b_ESA
 
         if n2 != -1:
             path.append({
-            'host' : self.logger.colored(v2, 'green'),
+            'host' : 'To: ' + self.logger.colored(v2, 'green'),
             'host2' : '',
             'ip' : '',
             'timestamp' : None,
@@ -4900,7 +4948,7 @@ Src: https://www.cisco.com/c/en/us/td/docs/security/esa/esa11-1/user_guide/b_ESA
                     r2 = f'({r})'
                     if r in SMTPHeadersAnalysis.Anti_Spam_Rules_ReverseEngineered.keys():
                         e = SMTPHeadersAnalysis.Anti_Spam_Rules_ReverseEngineered[r]
-                        tmp += f'\t- {r2: <15} - {e}\n'
+                        tmp += f'\t- {r2: <15} - {self.logger.colored(e, "yellow")}\n'
                         usedRE = True
                     else:
                         tmp += f'\t- {r2}\n'
@@ -5165,13 +5213,12 @@ Src: https://www.cisco.com/c/en/us/td/docs/security/esa/esa11-1/user_guide/b_ESA
         vvv = self.logger.colored(value, 'magenta')
         self.securityAppliances.add(value)
         result = f'- X-DKIM header was present and contained value: {vvv}\n'
-        result +  '  This header typically indicates DKIM verification filter version.'
 
         return {
             'header' : header,
             'value': value,
             'analysis' : result,
-            'description' : '',
+            'description' : 'This header typically indicates DKIM verification filter version.',
         }
 
     def testDKIMFilter(self):
@@ -5181,7 +5228,26 @@ Src: https://www.cisco.com/c/en/us/td/docs/security/esa/esa11-1/user_guide/b_ESA
         vvv = self.logger.colored(value, 'magenta')
         self.securityAppliances.add(value)
         result = f'- DKIM-Filter header was present and contained value: {vvv}\n'
-        result +  '  This header typically indicates DKIM verification filter version.'
+
+        return {
+            'header' : header,
+            'value': value,
+            'analysis' : result,
+            'description' : 'This header typically indicates DKIM verification filter version.',
+        }
+
+    def testBypassFocusedInbox(self):
+        (num, header, value) = self.getHeader('X-MS-Exchange-Organization-BypassFocusedInbox')
+        if num == -1: return []
+
+        value = value.strip()
+
+        result = f'- This message was marked with Bypass Focused Inbox specification:\n'
+        
+        if value.lower() == 'true' or value.lower() == 'yes':
+            result += f'\t- The message will get to Inbox folder instead of Focused Inbox folder.\n'
+        else:
+            result += f'\t- The message might get into Focused Inbox folder.\n'
 
         return {
             'header' : header,
@@ -5190,20 +5256,106 @@ Src: https://www.cisco.com/c/en/us/td/docs/security/esa/esa11-1/user_guide/b_ESA
             'description' : '',
         }
 
+    def testO365EnhancedFilteringExternalOriginalInternetSender(self):
+        (num, header, value) = self.getHeader('X-MS-Exchange-ExternalOriginalInternetSender')
+        if num == -1: return []
+
+        description = '''
+A custom mail flow rule was configured that supports Enhanced Filtering on Connector, as required by MS Defender for Office365.
+This rule allows Exchange Online Protection determine the real source IP address and then do spam/spf etc. on the true sender IP and not the hop before Exchange Online Protection. 
+
+Src:
+https://c7solutions.com/2020/09/mail-flow-to-the-correct-exchange-online-connector
+'''
+        value = SMTPHeadersAnalysis.flattenLine(value).strip()
+
+        result = f'- Office365 Enhanced Filtering for Connector was enabled facilitating Exchange Online Protection / MS Defender for Office365 protection.\n'
+        result += f'- This header points at the original external Internet sender to be scanned with Enhanced Filtering:\n\n'
+
+        parsed = {}
+        for m in re.finditer(r'(\w+)=([^;]+)', value, re.I):
+            parsed[m.group(1).lower()] = m.group(2)
+
+        for k, v in parsed.items():
+            result += f'\t- {self.logger.colored(k, "magenta"): <15}:   {self.logger.colored(v, "yellow")}\n'
+
+        return {
+            'header' : header,
+            'value': value,
+            'analysis' : result,
+            'description' : description,
+        }
+
+    def testO365EnhancedFilteringSkipListedInternetSender(self):
+        (num, header, value) = self.getHeader('X-MS-Exchange-SkipListedInternetSender')
+        if num == -1: return []
+
+        description = '''
+A custom mail flow rule was configured that supports Enhanced Filtering on Connector, as required by MS Defender for Office365.
+This rule allows Exchange Online Protection determine the real source IP address and then do spam/spf etc. on the true sender IP and not the hop before Exchange Online Protection. 
+
+Src:
+https://c7solutions.com/2020/09/mail-flow-to-the-correct-exchange-online-connector
+'''
+        value = SMTPHeadersAnalysis.flattenLine(value).strip()
+
+        result = f'- Office365 Enhanced Filtering for Connector was enabled facilitating Exchange Online Protection / MS Defender for Office365 protection.\n'
+        result += f'- This header lists MTA servers that should be skipped from Enhanced Filtering scanning:\n\n'
+
+        parsed = {}
+        for m in re.finditer(r'(\w+)=([^;]+)', value, re.I):
+            parsed[m.group(1).lower()] = m.group(2)
+
+        for k, v in parsed.items():
+            result += f'\t- {self.logger.colored(k, "magenta"): <15}:   {self.logger.colored(v, "yellow")}\n'
+
+        return {
+            'header' : header,
+            'value': value,
+            'analysis' : result,
+            'description' : description,
+        }
+
     def testXMailer(self):
         (num, header, value) = self.getHeader('X-Mailer')
         if num == -1: return []
 
         vvv = self.logger.colored(value, 'magenta')
         self.securityAppliances.add(value)
-        result = f'- X-Mailer header was present and contained value: {vvv}\n'
-        result +  '  This header typically indicates sending client\'s name (similar to User-Agent).'
+        result = f'- X-Mailer header was present and contained value:\n\t- {vvv}\n'
 
         return {
             'header' : header,
             'value': value,
             'analysis' : result,
-            'description' : '',
+            'description' : 'This header typically indicates sending client\'s name (similar to User-Agent).',
+        }
+
+    def testO365FirstContactSafetyTip(self):
+        (num, header, value) = self.getHeader('X-MS-Exchange-EnableFirstContactSafetyTip')
+        if num == -1: return []
+
+        description = f'''
+The initial method to implement the first contact safety tip was through a mail flow (transport) rule which inserts the X-MS-Exchange-EnableFirstContactSafetyTip x-header into external messages. The presence of the header causes Microsoft Defender to generate a safety tip if the sender has never sent email to the recipient before.
+
+MS documentation explains it as follows: "Specific safety tips will be displayed notifying recipients that they often don’t get email from the sender or in cases when the recipient gets an email for the first time from the sender"
+
+{self.logger.colored("This Mail Flow Rule is a custom one, not used in default installations.", "yellow")}
+
+Src:
+https://docs.microsoft.com/en-us/microsoft-365/security/office-365-security/set-up-anti-phishing-policies?view=o365-worldwide
+https://office365itpros.com/2020/11/26/enable-first-contact-safety-tip/
+'''
+
+        vvv = self.logger.colored(value, 'magenta')
+        self.securityAppliances.add('Exchange Online Protection')
+        result = f'- The target\'s Office365 was configured with a First Contact Safety Tip:\n\t- {vvv}\n'
+
+        return {
+            'header' : header,
+            'value': value,
+            'analysis' : result,
+            'description' : description,
         }
 
     def testMTAHostnamesExposed(self):
@@ -5221,10 +5373,10 @@ This can lead to an internal information disclosure. This test shows potential h
         result = f'- Some MTAs (Mail Transfer Agents) probably exposed their internal Hostnames:\n'
 
         for hostname, hdr in self.mtaHostnamesExposed.items():
-            result += f'\t- {hdr[1]: <10} #{hdr[0]: <2}: {self.logger.colored(hostname, "red"): <20}'
+            result += f'\t- {self.logger.colored(hdr[1], "magenta"): <10} #{hdr[0]: <2}: {self.logger.colored(hostname, "red"): <20}'
 
             if hdr[0] == 1:
-                result += self.logger.colored(f' (this is might be the sender\'s computer hostname!)', "yellow")
+                result += self.logger.colored(f' (this might be the sender\'s computer hostname!)', "yellow")
 
             result += '\n'
             

@@ -40,7 +40,7 @@ In order to embellish your Phishing HTML code before sending it to your client, 
 
 ### Processed headers
 
-Processed headers (more than **76+** headers are parsed):
+Processed headers (more than **83+** headers are parsed):
 
 - `X-forefront-antispam-report`
 - `X-exchange-antispam`
@@ -120,6 +120,11 @@ Processed headers (more than **76+** headers are parsed):
 - `X-Recommended-Action`
 - `X-AppInfo`
 - `X-Spam`
+- `X-TM-AS-MatchedID`
+- `X-MS-Exchange-EnableFirstContactSafetyTip`
+- `X-MS-Exchange-Organization-BypassFocusedInbox`
+- `X-MS-Exchange-SkipListedInternetSender`
+- `X-MS-Exchange-ExternalOriginalInternetSender`
 
 
 Most of these headers are not fully documented, therefore the script is unable to pinpoint all the details, but at least it collects all I could find on them.
@@ -392,7 +397,7 @@ C:\> py decode-spam-headers.py -l tests
              82 - Header Containing Client IP
              83 - Office365 Tenant ID
              84 - Organization Name
-             85 - MS Defender For Office365 Safe Links Version
+             85 - MS Defender for Office365 Safe Links Version
              86 - Suspicious Words in Headers
              87 - AWS SES Outgoing
              88 - IronPort-Data
@@ -403,6 +408,13 @@ C:\> py decode-spam-headers.py -l tests
              93 - X-SpamExperts-Evidence
              94 - X-Recommended-Action
              95 - X-AppInfo
+             96 - X-Spam
+             97 - X-TM-AS-MatchedID
+             98 - MTA Hostname Exposed
+             99 - Office365 First Contact Safety Tip
+            100 - EOP - Bypass Focused Inbox
+            101 - EOP - Enhanced Filtering - SkipListedInternetSender
+            102 - EOP - Enhanced Filtering - ExternalOriginalInternetSender
 ```
 
 
