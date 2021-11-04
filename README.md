@@ -259,6 +259,12 @@ Should you know anything about any other Office365 anti-spam rules (or have sugg
 
 ### Usage
 
+Install required Python3 dependencies before first use:
+
+```
+bash$ pip3 install -r requirements.txt 
+```
+
 Help:
 
 ```

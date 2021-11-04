@@ -101,6 +101,7 @@
 #
 # Requirements:
 #   - python-dateutil
+#   - tldextract
 #   - packaging
 #   - dnspython
 #   - requests
@@ -148,6 +149,15 @@ except ImportError:
     print('''
 [!] You need to install requests: 
         # pip3 install requests
+''')
+    sys.exit(1)
+
+try:
+    import tldextract
+except ImportError:
+    print('''
+[!] You need to install tldextract: 
+        # pip3 install tldextract
 ''')
     sys.exit(1)
 
@@ -913,8 +923,8 @@ class SMTPHeadersAnalysis:
         'jmr' : (
             'Junk Mail Rule (?) - mail considered as Spam by previous, existing mail rules?',
             {
-                '0' : logger.colored('Mail is not a Junk', 'green'),
-                '1' : logger.colored('Mail is a Junk', 'red'),
+                '0' : logger.colored('Mail not marked as Junk by mail rules.', 'cyan'),
+                '1' : logger.colored('Mail marked as Junk by mail rules.', 'red'),
             }
         ),
 
@@ -1453,6 +1463,7 @@ class SMTPHeadersAnalysis:
         self.received_path = []
         self.testsToRun = testsToRun
         self.securityAppliances = set()
+        self.mtaHostnamesExposed = {}
 
         # (number, header, value)
         self.headers = []
@@ -1559,6 +1570,7 @@ class SMTPHeadersAnalysis:
             ('77', 'Other interesting headers',                   self.testInterestingHeaders),
             ('78', 'Security Appliances Spotted',                 self.testSecurityAppliances),
             ('79', 'Email Providers Infrastructure Clues',        self.testEmailIntelligence),
+            ('98', 'MTA Hostname Exposed',                        self.testMTAHostnamesExposed),
         )
 
         testsDecodeAll = (
@@ -1608,11 +1620,14 @@ class SMTPHeadersAnalysis:
             return ''
 
         if addr in SMTPHeadersAnalysis.resolved.keys():
+            logger.dbg(f'Returning cached gethostbyaddr entry for: "{addr}"')
             return SMTPHeadersAnalysis.resolved[addr]
 
         try:
+            logger.dbg(f'gethostbyaddr("{addr}")...')
             res = socket.gethostbyaddr(addr)
             if len(res) > 0:
+                logger.dbg(f'Cached gethostbyaddr("{addr}") = "{res[0]}"')
                 SMTPHeadersAnalysis.resolved[addr] = res[0]
                 return res[0]
         except:
@@ -1626,11 +1641,14 @@ class SMTPHeadersAnalysis:
             return ''
 
         if name.lower() in SMTPHeadersAnalysis.resolved.keys():
+            logger.dbg(f'Returning cached gethostbyname entry for: "{name}"')
             return SMTPHeadersAnalysis.resolved[name]
             
         try:
+            logger.dbg(f'gethostbyname("{name}")...')
             res = socket.gethostbyname(name)
             if len(res) > 0:
+                logger.dbg(f'Cached gethostbyname("{name.lower()}") = "{res}"')
                 SMTPHeadersAnalysis.resolved[name.lower()] = res
                 return res
         except:
@@ -4283,7 +4301,7 @@ Src: https://www.cisco.com/c/en/us/td/docs/security/esa/esa11-1/user_guide/b_ESA
             'description' : '',
         }
 
-    def parseReceived(self, received):
+    def parseReceived(self, received, numReceived):
         obj = {
             'host' : '',
             'host2' : '',
@@ -4292,6 +4310,7 @@ Src: https://www.cisco.com/c/en/us/td/docs/security/esa/esa11-1/user_guide/b_ESA
             'ver' : '',
             'with' : '',
             'extra' : [],
+            'num' : numReceived,
         }
 
         keys = (
@@ -4368,7 +4387,7 @@ Src: https://www.cisco.com/c/en/us/td/docs/security/esa/esa11-1/user_guide/b_ESA
         obj['host2'] = ''
 
         match = re.search(
-            r'(?P<host>[^\s]+)\s+(?:\((?P<host2>[^\s]+)(?:\s*\[(?P<ip>\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3})\])?\))?', 
+            r'(?P<host>[^\s]+)\s*(?:\((?P<host2>[^\s]+)\.?(?:\s*\[(?P<ip>[^]]+)\])?\))?', 
             parsed['from'], 
             re.I
         )
@@ -4380,7 +4399,11 @@ Src: https://www.cisco.com/c/en/us/td/docs/security/esa/esa11-1/user_guide/b_ESA
 
             if not obj['ip']: obj['ip'] = ''
             if not obj['host']: obj['host'] = ''
-            if not obj['host2']: obj['host2'] = ''
+            if not obj['host2']: 
+                obj['host2'] = ''
+            else:
+                if obj['host2'].endswith('.'): 
+                    obj['host2'] = obj['host2'][:-1]
 
             if obj['host'][0] == '[' and obj['host'][-1] == ']':
                 obj['ip'] = obj['host'][1:-1]
@@ -4449,6 +4472,21 @@ Src: https://www.cisco.com/c/en/us/td/docs/security/esa/esa11-1/user_guide/b_ESA
 
             obj['extra'].append(v)
 
+        tldextracted = tldextract.extract(obj['host'])
+        hostnameExposed = False
+
+        if (len(tldextracted.domain) > 0 and len(tldextracted.suffix) == 0) \
+            or len(tldextracted.suffix) > 0 and len(tldextracted.domain) == 0: 
+            hostnameExposed = True
+
+        elif len(tldextracted.domain) > 0 and len(tldextracted.suffix) > 0 and not options['dont_resolve']: 
+            res = SMTPHeadersAnalysis.gethostbyname(f'{tldextracted.domain}.{tldextracted.suffix}')
+            hostnameExposed = res == ''
+
+        if hostnameExposed:
+            obj['extra'].append(f'Hostname exposed: {self.logger.colored(obj["host"], "red")}')
+            self.mtaHostnamesExposed[obj['host']] = (numReceived, 'Received', received)
+
         obj['_raw'] = received
 
         for k in obj.keys():
@@ -4503,13 +4541,16 @@ Src: https://www.cisco.com/c/en/us/td/docs/security/esa/esa11-1/user_guide/b_ESA
             'ver' : '',
             'parsed' : {},
             'extra' : [],
+            'num' : 0,
         })
 
+        numReceived = 0
         for i in range(len(received), 0, -1):
             r = received[i - 1][2]
             r = SMTPHeadersAnalysis.flattenLine(r)
 
-            obj = self.parseReceived(r)
+            numReceived += 1
+            obj = self.parseReceived(r, numReceived)
 
             if 'ver' in obj.keys() and len(obj['ver']) > 0:
                 vers = SMTPHeadersAnalysis.parseExchangeVersion(obj['ver'])
@@ -4546,6 +4587,7 @@ Src: https://www.cisco.com/c/en/us/td/docs/security/esa/esa11-1/user_guide/b_ESA
             'ver' : '',
             'parsed' : {},
             'extra' : [],
+            'num' : len(path) + 1,
         })
 
         result = '- List of server hops used to deliver message:\n\n'
@@ -4565,9 +4607,9 @@ Src: https://www.cisco.com/c/en/us/td/docs/security/esa/esa11-1/user_guide/b_ESA
                 s = '|_>'
             
             if num == 2 or n1 == -1:
-                result += iindent + indent * (num+1) + f'{s} ({num}) {self.logger.colored(elem["host"], "green")}'
+                result += iindent + indent * (num+1) + f'{s} ({elem["num"]}) {self.logger.colored(elem["host"], "green")}'
             else:
-                result += iindent + indent * (num+1) + f'{s} ({num}) {self.logger.colored(elem["host"], "yellow")}'
+                result += iindent + indent * (num+1) + f'{s} ({elem["num"]}) {self.logger.colored(elem["host"], "yellow")}'
 
             if elem['ip'] != None and len(elem['ip']) > 0:
                 if elem['ip'][0] == '[' and elem['ip'][-1] == ']':
@@ -5164,6 +5206,45 @@ Src: https://www.cisco.com/c/en/us/td/docs/security/esa/esa11-1/user_guide/b_ESA
             'description' : '',
         }
 
+    def testMTAHostnamesExposed(self):
+        if len(self.mtaHostnamesExposed) == 0:
+            self.logger.info('No MTA hostnames exposed or they were not collected by running testReceived yet.')
+            return []
+
+        headers = []
+        values = []
+
+        description = '''
+Some webmails or mail clients (such as MS Outlook) are known to attach system's Hostname to their "Received" header thus exposing it to all the other MTAs.
+This can lead to an internal information disclosure. This test shows potential hostname values extracted from Received headers as server-names, that couldn't been resolved back to their IPv4/IPv6.
+'''
+        result = f'- Some MTAs (Mail Transfer Agents) probably exposed their internal Hostnames:\n'
+
+        for hostname, hdr in self.mtaHostnamesExposed.items():
+            result += f'\t- {hdr[1]: <10} #{hdr[0]: <2}: {self.logger.colored(hostname, "red"): <20}'
+
+            if hdr[0] == 1:
+                result += self.logger.colored(f' (this is might be the sender\'s computer hostname!)', "yellow")
+
+            result += '\n'
+            
+            headers.append(hdr[1])
+            4
+            pos = hdr[2].lower().find(hostname.lower())
+            val = hdr[2]
+            
+            if pos != -1:
+                val = hdr[2][:pos] + self.logger.colored(hostname, "red") + hdr[2][pos + len(hostname):]
+
+            values.append(val)
+
+        return {
+            'header' : ', '.join(headers),
+            'value': '\n\n\t'.join(values),
+            'analysis' : result,
+            'description' : description,
+        }
+
     def testXSpam(self):
         (num, header, value) = self.getHeader('X-Spam')
         if num == -1: return []
@@ -5627,7 +5708,7 @@ def printOutput(out):
 {logger.colored("VALUE", "blue")}: 
     {value}
 
-{logger.colored("ANALYSIS", "yellow")}:
+{logger.colored("ANALYSIS", "blue")}:
 
 {analysis}
 '''
@@ -5636,7 +5717,7 @@ def printOutput(out):
 ------------------------------------------
 ({num}) Test: {logger.colored(k, "cyan")}
 
-{logger.colored("ANALYSIS", "yellow")}:
+{logger.colored("ANALYSIS", "blue")}:
 
 {analysis}
 '''
