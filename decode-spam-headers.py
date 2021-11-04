@@ -428,6 +428,9 @@ class SMTPHeadersAnalysis:
         ('Cisco IronPort / Email Security Appliance (ESA)'       , 'X-Policy'),
         ('Cisco IronPort / Email Security Appliance (ESA)'       , 'X-SBRS'),
         ('Cisco IronPort'                                        , 'X-IronPort-'),
+        ('Office365'                                             , 'X-.+Tenant.+'),
+        ('Office365'                                             , 'X-MS-Exchange-Organization'),
+        ('Office365'                                             , 'X-MS-Exchange-CrossTenant-Id'),
         ('Exchange Online Protection'                            , 'X-EOP'),
         ('Exchange Online Protection'                            , 'X-MS-Exchange-'),
         ('Exchange Online Protection - First Contact Safety'     , 'X-.+-EnableFirstContactSafetyTip'),
@@ -456,6 +459,11 @@ class SMTPHeadersAnalysis:
         ('Trend Micro Anti-Spam'                                 , 'X-TM-AS-'),
         ('Trend Micro Anti-Spam'                                 , 'X-TMASE-'),
         ('Trend Micro InterScan Messaging Security'              , 'X-IMSS-'),
+    )
+
+    Security_Appliances_And_Their_Values = \
+    (
+        ('Exchange Online Protection'                            , '.protection.outlook.com'),
     )
 
     Headers_Known_For_Breaking_Line = (
@@ -1489,6 +1497,8 @@ class SMTPHeadersAnalysis:
         Verstring('Exchange Server 2019 CU3', 'March 2, 2021', '15.2.464.15'),
     )
 
+    Manually_Added_Appliances = set()
+
     def __init__(self, logger, resolve = False, decode_all = False, testsToRun = []):
         self.text = ''
         self.results = {}
@@ -1502,6 +1512,10 @@ class SMTPHeadersAnalysis:
 
         # (number, header, value)
         self.headers = []
+
+    def addSecurityAppliance(self, name):
+        SMTPHeadersAnalysis.Manually_Added_Appliances.add(name.lower())
+        self.securityAppliances.add(name)
 
     def getAllTests(self):
 
@@ -2202,9 +2216,8 @@ Results will be unsound. Make sure you have pasted your headers with correct spa
         if num == -1: return []
 
         value = value.strip()
-        self.securityAppliances.add('MS Defender for Office365 - Safe Links')
-        result = f'- Microsoft Defender for Office365 (MDO) Safe Links was used in key version: {self.logger.colored(value, "green")}\n'
-        
+        self.addSecurityAppliance('MS Defender for Office365 - Safe Links')
+        result = f'- Microsoft Defender for Office365 (MDO) Safe Links was used in key version: {self.logger.colored(value, "green")}\n'        
         
         return {
             'header': header,
@@ -2216,12 +2229,19 @@ Results will be unsound. Make sure you have pasted your headers with correct spa
     def testSecurityAppliances(self):
         result = ''
         vals = [x.lower() for x in SMTPHeadersAnalysis.Header_Keywords_That_May_Contain_Spam_Info]
+        vals += [x[0].lower() for x in SMTPHeadersAnalysis.Security_Appliances_And_Their_Headers]
+        vals += [x[0].lower() for x in SMTPHeadersAnalysis.Security_Appliances_And_Their_Values]
+        vals += [x.lower() for x in SMTPHeadersAnalysis.Manually_Added_Appliances]
 
         self.logger.dbg('Spotted clues about security appliances:')
 
         for (num, header, value) in self.headers:
             for product, hdr in SMTPHeadersAnalysis.Security_Appliances_And_Their_Headers:
                 if re.search(re.escape(hdr), header, re.I):
+                    self.securityAppliances.add(product)
+
+            for product, val in SMTPHeadersAnalysis.Security_Appliances_And_Their_Values:
+                if re.search(re.escape(val), value, re.I):
                     self.securityAppliances.add(product)
 
         for a in self.securityAppliances:
@@ -2235,7 +2255,9 @@ Results will be unsound. Make sure you have pasted your headers with correct spa
                     skip = False
                     break
 
-            if skip: continue
+            if skip: 
+                continue
+
             result += f'\t- {a}\n'
 
         if len(result) == 0:
@@ -2279,6 +2301,7 @@ Results will be unsound. Make sure you have pasted your headers with correct spa
 
         value = SMTPHeadersAnalysis.flattenLine(value).strip().replace(' ', '')
         result = f'- Office365 Tenant ID: {self.logger.colored(value, "cyan")}\n'
+        self.addSecurityAppliance('Office365')
 
         try:
             r = requests.get(f'https://login.microsoftonline.com/{value}/.well-known/openid-configuration')
@@ -2410,6 +2433,7 @@ Results will be unsound. Make sure you have pasted your headers with correct spa
         value = SMTPHeadersAnalysis.flattenLine(value).strip()
 
         result = f'- Organization name disclosed: {self.logger.colored(value, "green")}\n'
+        self.addSecurityAppliance('Office365')
 
         try:
             r = requests.get(f'https://login.microsoftonline.com/{value}/.well-known/openid-configuration')
@@ -2458,7 +2482,7 @@ Results will be unsound. Make sure you have pasted your headers with correct spa
         if num == -1: return []
 
         result = '- Proofpoint Email Protection Spam details report\n'
-        self.securityAppliances.add('Proofpoint Email Protection')
+        self.addSecurityAppliance('Proofpoint Email Protection')
         return self._parseProofpoint(result, '', num, header, value)
 
     def _parseProofpoint(self, topic, description, num, header, value):
@@ -2512,7 +2536,7 @@ Results will be unsound. Make sure you have pasted your headers with correct spa
         if num == -1: return []
 
         result = '- Proofpoint Email Protection Anti-Virus version\n'
-        self.securityAppliances.add('Proofpoint Email Protection')
+        self.addSecurityAppliance('Proofpoint Email Protection')
         return self._parseProofpoint(result, '', num, header, value)
 
     def testXSpamExpertsClass(self):
@@ -2524,7 +2548,7 @@ Results will be unsound. Make sure you have pasted your headers with correct spa
         if value.lower() in SMTPHeadersAnalysis.SpamExperts_Classes.keys():
             result += f'\n\t- {value}: ' + SMTPHeadersAnalysis.SpamExperts_Classes[value.lower()] + '\n'
 
-        self.securityAppliances.add('n-able Mail Assure (SpamExperts)')
+        self.addSecurityAppliance('n-able Mail Assure (SpamExperts)')
         
         return {
             'header': header,
@@ -2564,7 +2588,7 @@ Results will be unsound. Make sure you have pasted your headers with correct spa
             except:
                 pass
             
-        self.securityAppliances.add('n-able Mail Assure (SpamExperts)')
+        self.addSecurityAppliance('n-able Mail Assure (SpamExperts)')
         
         return {
             'header': header,
@@ -2582,7 +2606,7 @@ Results will be unsound. Make sure you have pasted your headers with correct spa
         if value.lower() in SMTPHeadersAnalysis.SpamExperts_Actions.keys():
             result += f'\n\t- {value}: ' + SMTPHeadersAnalysis.SpamExperts_Actions[value.lower()] + '\n'
 
-        self.securityAppliances.add('n-able Mail Assure (SpamExperts)')
+        self.addSecurityAppliance('n-able Mail Assure (SpamExperts)')
         
         return {
             'header': header,
@@ -2596,7 +2620,7 @@ Results will be unsound. Make sure you have pasted your headers with correct spa
         if num == -1: return []
 
         result = '- Trend Micro Anti-Spam Engine (TMASE) Version\n'
-        self.securityAppliances.add('Trend Micro Anti-Spam')
+        self.addSecurityAppliance('Trend Micro Anti-Spam')
         parts = value.split('-')
 
         if len(parts) > 0: result += f'\t\t- Vendor Product Name:       {parts[0]}\n'
@@ -2629,7 +2653,7 @@ Results will be unsound. Make sure you have pasted your headers with correct spa
         if num == -1: return []
 
         result = '- Barracuda Email Security Spam Score\n'
-        self.securityAppliances.add('Barracuda Email Security')
+        self.addSecurityAppliance('Barracuda Email Security')
 
         thresholds = SMTPHeadersAnalysis.Barracuda_Score_Thresholds
         aggressive = False
@@ -2655,7 +2679,7 @@ Results will be unsound. Make sure you have pasted your headers with correct spa
         if num == -1: return []
 
         result = '- Barracuda Email Security Spam Status (based on SpamAssassin)\n\n'
-        self.securityAppliances.add('Barracuda Email Security')
+        self.addSecurityAppliance('Barracuda Email Security')
 
         thresholds = SMTPHeadersAnalysis.Barracuda_Score_Thresholds
         aggressive = False
@@ -2739,7 +2763,7 @@ Results will be unsound. Make sure you have pasted your headers with correct spa
         if num == -1: return []
 
         result = f'- Barracuda Email Security Spam Report:\n\t- {value.strip()}\n'
-        self.securityAppliances.add('Barracuda Email Security')
+        self.addSecurityAppliance('Barracuda Email Security')
 
         return {
             'header': header,
@@ -2753,7 +2777,7 @@ Results will be unsound. Make sure you have pasted your headers with correct spa
         if num == -1: return []
 
         result = f'- Barracuda Email Security Spam Bayesian analysis:\n\t- {value.strip()}\n'
-        self.securityAppliances.add('Barracuda Email Security')
+        self.addSecurityAppliance('Barracuda Email Security')
 
         return {
             'header': header,
@@ -2770,7 +2794,7 @@ Results will be unsound. Make sure you have pasted your headers with correct spa
         val = datetime.utcfromtimestamp(ts).strftime('%Y-%m-%d %H:%M:%S')
         
         result = f'- Barracuda Email Security Start Time: {self.logger.colored(val, "green")} ({ts})\n'
-        self.securityAppliances.add('Barracuda Email Security')
+        self.addSecurityAppliance('Barracuda Email Security')
 
         return {
             'header': header,
@@ -2784,7 +2808,7 @@ Results will be unsound. Make sure you have pasted your headers with correct spa
         if num == -1: return []
 
         result = '- Trend Micro Anti-Spam Engine (TMASE) Version\n'
-        self.securityAppliances.add('Trend Micro Anti-Spam')
+        self.addSecurityAppliance('Trend Micro Anti-Spam')
         parts = value.split('-')
 
         if len(parts) > 0: result += f'\t\t- Vendor Product Name:       {parts[0]}\n'
@@ -2816,7 +2840,7 @@ Results will be unsound. Make sure you have pasted your headers with correct spa
         if num == -1: return []
 
         result = '- Trend Micro Anti-Spam\n'
-        self.securityAppliances.add('Trend Micro Anti-Spam')
+        self.addSecurityAppliance('Trend Micro Anti-Spam')
 
         if value.strip().lower() == 'yes': 
             result += self.logger.colored('\t- system Approved this Sender\n', 'green')
@@ -2836,7 +2860,7 @@ Results will be unsound. Make sure you have pasted your headers with correct spa
         if num == -1: return []
 
         result = '- Mimecast mail impersonation report:\n\n'
-        self.securityAppliances.add('Mimecast')
+        self.addSecurityAppliance('Mimecast')
 
         value = SMTPHeadersAnalysis.flattenLine(value)
 
@@ -2872,7 +2896,7 @@ Results will be unsound. Make sure you have pasted your headers with correct spa
         if num == -1: return []
 
         result = '- Trend Micro Anti-Spam\n'
-        self.securityAppliances.add('Trend Micro Anti-Spam')
+        self.addSecurityAppliance('Trend Micro Anti-Spam')
 
         if value.strip().lower() == 'yes': 
             result += self.logger.colored('\t- system Blocked this Sender\n', 'red')
@@ -2905,7 +2929,7 @@ Results will be unsound. Make sure you have pasted your headers with correct spa
             result = f'- Trend Micro Anti-Spam triggered following rules on this e-mail:\n\n'
             result += f'{value}\n'
 
-        self.securityAppliances.add('Trend Micro Anti-Spam')
+        self.addSecurityAppliance('Trend Micro Anti-Spam')
         
         return {
             'header': header,
@@ -2919,7 +2943,7 @@ Results will be unsound. Make sure you have pasted your headers with correct spa
         if num == -1: return []
 
         result = '- Trend Micro Anti Spam Engine (TMASE) Social Engineering Attack Protection (SNAP) scan result\n\n'
-        self.securityAppliances.add('Trend Micro Anti-Spam')
+        self.addSecurityAppliance('Trend Micro Anti-Spam')
 
         parts = value.strip().split('-')
 
@@ -2962,7 +2986,7 @@ Results will be unsound. Make sure you have pasted your headers with correct spa
         (num, header, value) = self.getHeader('X-IMSS-DKIM-White-List')
         if num == -1: return []
 
-        self.securityAppliances.add('Trend Micro InterScan Messaging Security')
+        self.addSecurityAppliance('Trend Micro InterScan Messaging Security')
 
         if value.strip().lower() == 'yes': 
             result = '- Trend Micro InterScan Messaging Security DKIM White Listed this sender\n'
@@ -2982,7 +3006,7 @@ Results will be unsound. Make sure you have pasted your headers with correct spa
         if num == -1: return []
 
         result = '- Trend Micro Anti-Spam Result\n'
-        self.securityAppliances.add('Trend Micro Anti-Spam')
+        self.addSecurityAppliance('Trend Micro Anti-Spam')
         return self._parseTMASResult(result, '', num, header, value)
 
     def testXTMASEResult(self):
@@ -2990,7 +3014,7 @@ Results will be unsound. Make sure you have pasted your headers with correct spa
         if num == -1: return []
 
         result = '- Trend Micro Anti-Spam Engine (TMASE) Result\n'
-        self.securityAppliances.add('Trend Micro Anti-Spam')
+        self.addSecurityAppliance('Trend Micro Anti-Spam')
         return self._parseTMASResult(result, '', num, header, value)
 
     def testXTMScanDetails(self):
@@ -2998,7 +3022,7 @@ Results will be unsound. Make sure you have pasted your headers with correct spa
         if num == -1: return []
 
         result = '- Trend Micro InterScan Messaging Security Scan Details\n'
-        self.securityAppliances.add('Trend Micro InterScan Messaging Security')
+        self.addSecurityAppliance('Trend Micro InterScan Messaging Security')
         return self._parseTMASResult(result, '', num, header, value)
 
     def _parseTMASResult(self, topicLine, description, num, header, value):
@@ -3107,7 +3131,7 @@ Results will be unsound. Make sure you have pasted your headers with correct spa
         if num == -1: return []
 
         result = '- Trend Micro Anti-Spam Engine (TMASE) SNAP Result\n'
-        self.securityAppliances.add('Trend Micro Anti-Spam')
+        self.addSecurityAppliance('Trend Micro Anti-Spam')
         result += f'\t- {value}\n'
 
         return {
@@ -3122,7 +3146,7 @@ Results will be unsound. Make sure you have pasted your headers with correct spa
         if num == -1: return []
 
         result = '- Trend Micro Anti-Spam XFilter\n'
-        self.securityAppliances.add('Trend Micro Anti-Spam')
+        self.addSecurityAppliance('Trend Micro Anti-Spam')
         result += f'\t- {value}\n'
 
         return {
@@ -3153,7 +3177,7 @@ Results will be unsound. Make sure you have pasted your headers with correct spa
 
         value = SMTPHeadersAnalysis.flattenLine(value)
         result = '- Trend Micro Anti-Spam SMTP servers\n'
-        self.securityAppliances.add('Trend Micro Anti-Spam')
+        self.addSecurityAppliance('Trend Micro Anti-Spam')
         parts = value.split(' ')
 
         if len(parts) > 2:
@@ -3179,7 +3203,7 @@ Results will be unsound. Make sure you have pasted your headers with correct spa
         if num == -1: return []
 
         result = f'- Message was scanned with an Anti-Virus.'
-        self.securityAppliances.add('Unknown Anti-Virus')
+        self.addSecurityAppliance('Unknown Anti-Virus')
 
         return {
             'header' : header,
@@ -3193,7 +3217,7 @@ Results will be unsound. Make sure you have pasted your headers with correct spa
         if num == -1: return []
 
         result = f'- Message was scanned with FireEye Email Security Solution. Result is following:\n'
-        self.securityAppliances.add('FireEye Email Security Solution')
+        self.addSecurityAppliance('FireEye Email Security Solution')
         result += f'\t- {self.logger.colored(value, "green")}\n'
 
         return {
@@ -3276,7 +3300,7 @@ Results will be unsound. Make sure you have pasted your headers with correct spa
         if num == -1: return []
 
         result = f'- Cisco IronPort observed following IP of the connecting Client: '
-        self.securityAppliances.add('Cisco IronPort')
+        self.addSecurityAppliance('Cisco IronPort')
         return self._originatingIPTest(result, '', num, header, value)
 
     def testXSESOutgoing(self):
@@ -3353,7 +3377,7 @@ Results will be unsound. Make sure you have pasted your headers with correct spa
         if num == -1: return []
 
         result = f'- Sophos Email Appliance Spam report:\n'
-        self.securityAppliances.add('Sophos Email Appliance (PureMessage)')
+        self.addSecurityAppliance('Sophos Email Appliance (PureMessage)')
         report = {}
         value = SMTPHeadersAnalysis.flattenLine(value)
 
@@ -3455,7 +3479,7 @@ Results will be unsound. Make sure you have pasted your headers with correct spa
         if num == -1: return []
 
         result = f'- SpamDiagnosticMetadata: Antispam stamps in Exchange Server 2016.\n'
-        self.securityAppliances.add('Exchange Server 2016 Anti-Spam')
+        self.addSecurityAppliance('Exchange Server 2016 Anti-Spam')
 
         if value.strip() in SMTPHeadersAnalysis.Spam_Diagnostics_Metadata.keys():
             result += f'     {value}: ' + SMTPHeadersAnalysis.Spam_Diagnostics_Metadata[value.strip()] + '\n'
@@ -3473,7 +3497,7 @@ Results will be unsound. Make sure you have pasted your headers with correct spa
         (num, header, value) = self.getHeader('IronPort-HdrOrdr')
         if num == -1: return []
 
-        self.securityAppliances.add('Cisco IronPort / Email Security Appliance (ESA)')
+        self.addSecurityAppliance('Cisco IronPort / Email Security Appliance (ESA)')
         
         if self.decode_all:
             dumped = SMTPHeadersAnalysis.hexdump(SMTPHeadersAnalysis.safeBase64Decode(value))
@@ -3495,7 +3519,7 @@ Results will be unsound. Make sure you have pasted your headers with correct spa
         (num, header, value) = self.getHeader('IronPort-Data')
         if num == -1: return []
 
-        self.securityAppliances.add('Cisco IronPort / Email Security Appliance (ESA)')
+        self.addSecurityAppliance('Cisco IronPort / Email Security Appliance (ESA)')
 
         if self.decode_all:
             dumped = SMTPHeadersAnalysis.hexdump(SMTPHeadersAnalysis.safeBase64Decode(value))
@@ -3517,14 +3541,14 @@ Results will be unsound. Make sure you have pasted your headers with correct spa
         (num, header, value) = self.getHeader('X-IronPort-SenderGroup')
         if num == -1: return []
 
-        self.securityAppliances.add('Cisco IronPort / Email Security Appliance (ESA)')
+        self.addSecurityAppliance('Cisco IronPort / Email Security Appliance (ESA)')
         return self._parseCiscoPolicy('\n- Cisco\'s Email Security Appliance (ESA) applied following Mail Flow policy to this e-mails SenderGroup:\n', '', num, header, value)
 
     def testXIronPortMailFlowPolicy(self):
         (num, header, value) = self.getHeader('X-IronPort-MailFlowPolicy')
         if num == -1: return []
 
-        self.securityAppliances.add('Cisco IronPort / Email Security Appliance (ESA)')
+        self.addSecurityAppliance('Cisco IronPort / Email Security Appliance (ESA)')
         return self._parseCiscoPolicy(
             '\n- Cisco\'s Email Security Appliance (ESA) applied following Mail Flow policy to this e-mail:\n', 
             '''
@@ -3540,7 +3564,7 @@ Src: https://www.cisco.com/c/en/us/support/docs/security/email-security-applianc
         if num == -1: return []
 
         if value.strip().upper() in SMTPHeadersAnalysis.Cisco_Predefined_MailFlow_Policies.keys():
-            self.securityAppliances.add('Cisco IronPort / Email Security Appliance (ESA)')
+            self.addSecurityAppliance('Cisco IronPort / Email Security Appliance (ESA)')
             return self._parseCiscoPolicy('\n- Cisco\'s Email Security Appliance (ESA) applied following Mail Flow policy to this e-mail:\n', '', num, header, value)
 
         else:
@@ -3578,7 +3602,7 @@ Src: https://www.cisco.com/c/en/us/support/docs/security/email-security-applianc
         (num, header, value) = self.getHeader('X-IronPort-Reputation')
         if num == -1: return []
 
-        self.securityAppliances.add('Cisco IronPort / Email Security Appliance (ESA)')
+        self.addSecurityAppliance('Cisco IronPort / Email Security Appliance (ESA)')
         topicLine = f'\n\n- Cisco SenderBase Reputation Service result:\n'
         return self._parseCiscoSBRS(topicLine, '', num, header, value)
 
@@ -3587,7 +3611,7 @@ Src: https://www.cisco.com/c/en/us/support/docs/security/email-security-applianc
         if num == -1: return []
 
         topicLine = f'\n\n- Cisco SenderBase Reputation Service result (custom header set):\n'
-        self.securityAppliances.add('Cisco IronPort / Email Security Appliance (ESA)')
+        self.addSecurityAppliance('Cisco IronPort / Email Security Appliance (ESA)')
         return self._parseCiscoSBRS(topicLine, '', num, header, value)
 
 
@@ -3633,7 +3657,7 @@ Src: https://www.cisco.com/c/en/us/td/docs/security/esa/esa11-1/user_guide/b_ESA
         (num, header, value) = self.getHeader('X-IronPort-AV')
         if num == -1: return []
 
-        self.securityAppliances.add('Cisco IronPort / Email Security Appliance (ESA)')
+        self.addSecurityAppliance('Cisco IronPort / Email Security Appliance (ESA)')
         result = f'- Cisco IronPort Anti-Virus interface.\n'
         value = SMTPHeadersAnalysis.flattenLine(value)
 
@@ -3732,7 +3756,7 @@ Src: https://www.cisco.com/c/en/us/td/docs/security/esa/esa11-1/user_guide/b_ESA
         (num, header, value) = self.getHeader('X-IronPort-Anti-Spam-Filtered')
         if num == -1: return []
 
-        self.securityAppliances.add('Cisco IronPort / Email Security Appliance (ESA)')
+        self.addSecurityAppliance('Cisco IronPort / Email Security Appliance (ESA)')
         if value.strip().strip() == 'true':
             result = f'- Cisco IronPort Anti-Spam rules {self.logger.colored("marked this message SPAM", "red")}.'
         else:
@@ -3751,7 +3775,7 @@ Src: https://www.cisco.com/c/en/us/td/docs/security/esa/esa11-1/user_guide/b_ESA
         (num, header, value) = self.getHeader('X-IronPort-Anti-Spam-Result')
         if num == -1: return []
 
-        self.securityAppliances.add('Cisco IronPort / Email Security Appliance (ESA)')
+        self.addSecurityAppliance('Cisco IronPort / Email Security Appliance (ESA)')
         if self.decode_all:
             dumped = SMTPHeadersAnalysis.hexdump(SMTPHeadersAnalysis.safeBase64Decode(value))
 
@@ -3772,7 +3796,7 @@ Src: https://www.cisco.com/c/en/us/td/docs/security/esa/esa11-1/user_guide/b_ESA
         (num, header, value) = self.getHeader('X-Spam-Checker-Version')
         if num == -1: return []
 
-        self.securityAppliances.add('SpamAssassin')
+        self.addSecurityAppliance('SpamAssassin')
         result = f'- SpamAssassin version.'
 
         return {
@@ -3787,7 +3811,7 @@ Src: https://www.cisco.com/c/en/us/td/docs/security/esa/esa11-1/user_guide/b_ESA
         if num == -1: return []
 
         result = f'- OVH considered this message as SPAM and attached following Spam '
-        self.securityAppliances.add('OVH Anti-Spam')
+        self.addSecurityAppliance('OVH Anti-Spam')
         value = SMTPHeadersAnalysis.flattenLine(value).replace(' ', '').replace('\t', '')
         result += f'Score: {self.logger.colored(value.strip(), "red")}\n'
 
@@ -3802,7 +3826,7 @@ Src: https://www.cisco.com/c/en/us/td/docs/security/esa/esa11-1/user_guide/b_ESA
         (num, header, value) = self.getHeader('X-Ovh-Spam-Reason')
         if num == -1: return []
 
-        self.securityAppliances.add('OVH Anti-Spam')
+        self.addSecurityAppliance('OVH Anti-Spam')
         result = self.logger.colored(f'- OVH considered this message as SPAM', 'red') + ' and attached following information:\n'
         value = SMTPHeadersAnalysis.flattenLine(value).replace(' ', '').replace('\t', '')
         tmp = ''
@@ -3825,7 +3849,7 @@ Src: https://www.cisco.com/c/en/us/td/docs/security/esa/esa11-1/user_guide/b_ESA
         if num == -1: return []
 
         result = ''
-        self.securityAppliances.add('OVH Anti-Spam')
+        self.addSecurityAppliance('OVH Anti-Spam')
         value = SMTPHeadersAnalysis.flattenLine(value).replace(' ', '').replace('\t', '')
 
         decoded = SMTPHeadersAnalysis.decodeSpamcause(value)
@@ -3915,7 +3939,7 @@ Src: https://www.cisco.com/c/en/us/td/docs/security/esa/esa11-1/user_guide/b_ESA
                 shown.add(header)
 
         if len(tmp) > 0:
-            self.securityAppliances.add('SpamAssassin alike')
+            self.addSecurityAppliance('SpamAssassin alike')
             result = '\n- Found SpamAssassin like headers that might indicate Spam Risk score:\n'
             result += tmp + '\n'
 
@@ -4004,7 +4028,7 @@ Src: https://www.cisco.com/c/en/us/td/docs/security/esa/esa11-1/user_guide/b_ESA
         (num, header, value) = self.getHeader('X-Spam-Status')
         if num == -1: return []
 
-        self.securityAppliances.add('SpamAssassin')
+        self.addSecurityAppliance('SpamAssassin')
         result = '- SpamAssassin spam report\n\n'
         return self._parseSpamAssassinStatus(result, '', num, header, value, SMTPHeadersAnalysis.Barracuda_Score_Thresholds)
 
@@ -4213,7 +4237,7 @@ Src: https://www.cisco.com/c/en/us/td/docs/security/esa/esa11-1/user_guide/b_ESA
         (num, header, value) = self.getHeader('X-Spam-Flag')
         if num == -1: return []
 
-        self.securityAppliances.add('SpamAssassin')
+        self.addSecurityAppliance('SpamAssassin')
 
         if value.strip().lower() == 'yes':
             result = self.logger.colored(f'- SpamAssassin marked this message as SPAM:\n', 'red')
@@ -4257,14 +4281,14 @@ Src: https://www.cisco.com/c/en/us/td/docs/security/esa/esa11-1/user_guide/b_ESA
     def testSpamAssassinSpamLevel(self):
         (num, header, value) = self.getHeader('X-Spam-Level')
         if num == -1: return []
-        self.securityAppliances.add('SpamAssassin')
+        self.addSecurityAppliance('SpamAssassin')
         return self._parseAsteriskRiskScore('- SpamAssassin assigned following spam level to this message:\n', '', num, header, value)
 
     def testSpamAssassinSpamReport(self):
         (num, header, value) = self.getHeader('X-Spam-Report')
         if num == -1: return []
 
-        self.securityAppliances.add('SpamAssassin')
+        self.addSecurityAppliance('SpamAssassin')
         if len(value.strip()) > 0:
             result = f'- SpamAssassin assigned following spam report to this message:\n'
             tmp = ''
@@ -4290,13 +4314,13 @@ Src: https://www.cisco.com/c/en/us/td/docs/security/esa/esa11-1/user_guide/b_ESA
         if num == -1: return []
 
         props = value.split('|')
-        self.securityAppliances.add('MS Defender Advanced Threat Protection')
+        self.addSecurityAppliance('MS Defender Advanced Threat Protection')
         result = '- MS Defender Advanced Threat Protection enabled following protections on this message:\n'
 
         for prop in props:
             if prop in SMTPHeadersAnalysis.ATP_Message_Properties.keys():
                 result += f'\t- ' + self.logger.colored(SMTPHeadersAnalysis.ATP_Message_Properties[prop], 'magenta') + '\n'
-                self.securityAppliances.add('MS Defender for Office365 - ' + SMTPHeadersAnalysis.ATP_Message_Properties[prop])
+                self.addSecurityAppliance('MS Defender for Office365 - ' + SMTPHeadersAnalysis.ATP_Message_Properties[prop])
 
         return {
             'header' : header,
@@ -4309,7 +4333,7 @@ Src: https://www.cisco.com/c/en/us/td/docs/security/esa/esa11-1/user_guide/b_ESA
         (num, header, value) = self.getHeader('X-Amp-Result')
         if num == -1: return []
 
-        self.securityAppliances.add('Cisco Advanced Malware Protection (AMP)')
+        self.addSecurityAppliance('Cisco Advanced Malware Protection (AMP)')
         result = '- Cisco Meraki Advanced Malware Protection (AMP) sandbox marked this message as:\n'
         val = value.strip()
         k = value.strip().upper()
@@ -4330,7 +4354,7 @@ Src: https://www.cisco.com/c/en/us/td/docs/security/esa/esa11-1/user_guide/b_ESA
         (num, header, value) = self.getHeader('X-IP-Spam-Verdict')
         if num == -1: return []
 
-        self.securityAppliances.add('SpamAssassin')
+        self.addSecurityAppliance('SpamAssassin')
         result = '- An old SpamAssassin SPAM verdict header:\n'
 
         col = 'cyan'
@@ -4737,7 +4761,7 @@ Src: https://www.cisco.com/c/en/us/td/docs/security/esa/esa11-1/user_guide/b_ESA
         obj1 = self._parseBulk(num, header, value)
         result += '\n' + obj1['analysis']
 
-        self.securityAppliances.add('MS ForeFront Anti-Spam')
+        self.addSecurityAppliance('MS ForeFront Anti-Spam')
 
         obj['analysis'] = result
         return obj
@@ -4746,7 +4770,7 @@ Src: https://www.cisco.com/c/en/us/td/docs/security/esa/esa11-1/user_guide/b_ESA
         (num, header, value) = self.getHeader('X-Microsoft-Antispam')
         if num == -1: return []
 
-        self.securityAppliances.add('MS ForeFront Anti-Spam')
+        self.addSecurityAppliance('MS ForeFront Anti-Spam')
         return self._parseBulk(num, header, value)
 
     def testForefrontAntiSCL(self):
@@ -4861,21 +4885,21 @@ Src: https://www.cisco.com/c/en/us/td/docs/security/esa/esa11-1/user_guide/b_ESA
         (num, header, value) = self.getHeader('X-Forefront-Antispam-Report')
         if num == -1: return []
 
-        self.securityAppliances.add('MS ForeFront Anti-Spam')
+        self.addSecurityAppliance('MS ForeFront Anti-Spam')
         return self._parseAntiSpamReport(num, header, value)
 
     def testForefrontAntiSpamReportUntrusted(self):
         (num, header, value) = self.getHeader('X-Forefront-Antispam-Report-Untrusted')
         if num == -1: return []
 
-        self.securityAppliances.add('MS ForeFront Anti-Spam')
+        self.addSecurityAppliance('MS ForeFront Anti-Spam')
         return self._parseAntiSpamReport(num, header, value)
 
     def testForefrontAntiSpamUntrusted(self):
         (num, header, value) = self.getHeader('X-Microsoft-Antispam-Untrusted')
         if num == -1: return []
 
-        self.securityAppliances.add('MS ForeFront Anti-Spam')
+        self.addSecurityAppliance('MS ForeFront Anti-Spam')
         return self._parseAntiSpamReport(num, header, value)
     
     def _parseAntiSpamReport(self, num, header, value):
@@ -5096,7 +5120,7 @@ Src: https://www.cisco.com/c/en/us/td/docs/security/esa/esa11-1/user_guide/b_ESA
         if type(value) == bytes:
             value = value.decode()
 
-        self.securityAppliances.add('MS ForeFront Anti-Spam')
+        self.addSecurityAppliance('MS ForeFront Anti-Spam')
         result = '- Base64 encoded & encrypted Antispam Message Info:\n\n'
         result += value
 
@@ -5123,7 +5147,7 @@ Src: https://www.cisco.com/c/en/us/td/docs/security/esa/esa11-1/user_guide/b_ESA
         if num == -1: return []
 
         parsed = {}
-        self.securityAppliances.add('MS ForeFront Anti-Spam') 
+        self.addSecurityAppliance('MS ForeFront Anti-Spam') 
         result = '- This header denotes where to move received message. Informs about applied Mail Rules, target directory in user\'s Inbox.\n\n'
 
         for entry in value.split(';'):
@@ -5348,7 +5372,7 @@ https://office365itpros.com/2020/11/26/enable-first-contact-safety-tip/
 '''
 
         vvv = self.logger.colored(value, 'magenta')
-        self.securityAppliances.add('Exchange Online Protection')
+        self.addSecurityAppliance('Exchange Online Protection')
         result = f'- The target\'s Office365 was configured with a First Contact Safety Tip:\n\t- {vvv}\n'
 
         return {
@@ -5492,7 +5516,7 @@ This can lead to an internal information disclosure. This test shows potential h
         if num == -1: return []
 
         vvv = self.logger.colored(value, 'magenta')
-        self.securityAppliances.add('Mimecast')
+        self.addSecurityAppliance('Mimecast')
         result = f'- Mimecast attached following Spam score: {vvv}\n'
 
         try:
