@@ -654,7 +654,7 @@ ANALYSIS:
 
 - HTML formatted output (when used with colors) is not working at the moment. Need to rewrite loggic that translates ANSI colors into HTML colors.
 - `getOffice365TenantNameById(tenantID)` method is not yet finished, I know of a few ways to map Office365 Tenant GUID into Tenant Name but couldn't yet establish a stable way to do so.
-
+- `Authentication-Results` header is not yet completely parsed - gotta include `reason` processing and other fields according to [Microsoft documentation](https://docs.microsoft.com/en-us/microsoft-365/security/office-365-security/anti-spam-message-headers?view=o365-worldwide)
 
 ---
 
