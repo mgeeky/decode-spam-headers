@@ -36,6 +36,9 @@ In order to embellish your Phishing HTML code before sending it to your client, 
 
 ![4.png](img/4.png)
 
+- Report can be generated into a good-looking HTML:
+
+![5.png](img/5.png)
 
 
 ### Processed headers
@@ -274,7 +277,7 @@ Help:
 
 ```
 PS> py .\decode-spam-headers.py --help
-usage: decode-spam-headers.py [options] <file>
+usage: decode-spam-headers.py [options] <file | --list tests>
 
 optional arguments:
   -h, --help            show this help message and exit
@@ -285,7 +288,7 @@ Required arguments:
 Options:
   -o OUTFILE, --outfile OUTFILE
                         Output file with report
-  -f {json,text}, --format {json,text}
+  -f {json,text,html}, --format {json,text,html}
                         Analysis report format. JSON, text. Default: text
   -N, --nocolor         Dont use colors in text output.
   -v, --verbose         Verbose mode.
@@ -298,6 +301,7 @@ Tests:
   -e tests, --exclude-tests tests
                         Comma-separated list of test IDs to skip. Ex. --exclude-tests 1,3,7
   -r, --resolve         Resolve IPv4 addresses / Domain names.
+  -R, --dont-resolve    Do not resolve anything.
   -a, --decode-all      Decode all =?us-ascii?Q? mail encoded messages and print their contents.
 ```
 
@@ -652,7 +656,6 @@ ANALYSIS:
 
 ### Known Issues
 
-- HTML formatted output (when used with colors) is not working at the moment. Need to rewrite loggic that translates ANSI colors into HTML colors.
 - `getOffice365TenantNameById(tenantID)` method is not yet finished, I know of a few ways to map Office365 Tenant GUID into Tenant Name but couldn't yet establish a stable way to do so.
 - `Authentication-Results` header is not yet completely parsed - gotta include `reason` processing and other fields according to [Microsoft documentation](https://docs.microsoft.com/en-us/microsoft-365/security/office-365-security/anti-spam-message-headers?view=o365-worldwide)
 

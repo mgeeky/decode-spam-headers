@@ -201,6 +201,18 @@ class Logger:
         'grey':     38,
     }
 
+    html_colors_map = {
+        'background':'rgb(40, 44, 52)',
+        'grey':      'rgb(132, 139, 149)',
+        'cyan' :     'rgb(86, 182, 194)',
+        'blue' :     'rgb(97, 175, 239)',
+        'red' :      'rgb(224, 108, 117)',
+        'magenta' :  'rgb(198, 120, 221)',
+        'yellow' :   'rgb(229, 192, 123)',
+        'white' :    'rgb(220, 223, 228)',
+        'green' :    'rgb(108, 135, 94)',
+    }
+
     colors_dict = {
         'error': colors_map['red'],
         'trace': colors_map['magenta'],
@@ -218,36 +230,65 @@ class Logger:
 
     @staticmethod
     def with_color(c, s):
-        return "\x1b[%dm%s\x1b[0m" % (c, s)
+        #return "\x1b[%dm%s\x1b[0m" % (c, s)
+        return f'__COLOR_{c}__|{s}|__END_COLOR__'
 
     @staticmethod
-    def replaceColorToHtml(s):
-        out = ''
-        i = 0
+    def replaceColors(s, colorizingFunc):
+        pos = 0
 
-        while i < len(s):
-            if s[i] == '\x1b' and s[i+1] == '[' and s[i+2] != '0':
-                c = int(s[i+2:i+4])
+        while pos < len(s):
+            if s[pos:].startswith('__COLOR_'):
+                pos += len('__COLOR_')
+                pos1 = s[pos:].find('__|')
+
+                assert pos1 != -1, "Output colors mismatch - could not find pos of end of color number!"
+
+                c = int(s[pos:pos+pos1])
+                pos += pos1 + len('__|')
+                pos2 = s[pos:].find('|__END_COLOR__')
+
+                assert pos2 != -1, "Output colors mismatch - could not find end of color marker!"
+
+                txt = s[pos:pos+pos2]
+                pos += pos2 + len('|__END_COLOR__')
+
+                patt = f'__COLOR_{c}__|{txt}|__END_COLOR__'
+
+                colored = colorizingFunc(c, txt)
+
+                assert len(colored) > 0, f"Could not strip colors from phrase: ({patt})!"
+
+                s = s.replace(patt, colored)
                 pos = 0
-                while pos < len(s):
-                    if s[pos] == '\x1b' and s[pos+1] == '[' and s[pos+2] == '0' and s[pos+3] == 'm':
-                        break
-                    pos += 1
-
-                txt = s[i+5:pos]
-                i = i + 5 + pos + 4
-
-                for k, v in Logger.colors_map.items():
-                    if v == c:
-                        out += f'<p style="color:{k}">{escape(txt)}</p>'
-                        break
-
                 continue
 
-            out += s[i]
-            i += 1
+            pos += 1
+
+        return s
+
+    @staticmethod
+    def noColors(s):
+        return Logger.replaceColors(s, lambda c, txt: txt)
 
         return out
+
+    def ansiColors(s):
+        return Logger.replaceColors(s, lambda c, txt: f'\x1b[{c}m{txt}\x1b[0m')
+
+    @staticmethod
+    def htmlColors(s):
+        def get_col(c, txt):
+            text = escape(txt)
+
+            for k, v in Logger.colors_map.items():
+                if v == c:
+                    htmlCol = Logger.html_colors_map[k]
+                    return f'<font class="text-{k}">{text}</font>'
+            
+            return text
+
+        return Logger.replaceColors(s, get_col)
 
     def colored(self, txt, col):
         if self.options['nocolor']:
@@ -305,19 +346,29 @@ class Logger:
         if 'force_stdout' in args:
             fd = sys.stdout
 
+        to_write = ''
+
         if type(fd) == str:
-            with open(fd, 'a') as f:
-                prefix2 = ''
-                if mode: 
-                    prefix2 = '%s' % (mode.upper())
-                f.write(prefix2 + txt + nl)
-                f.flush()
+            prefix2 = ''
+            if mode: 
+                prefix2 = '%s' % (mode.upper())
+            prefix2 + txt + nl
 
         else:
             if args['nocolor']:
-                fd.write(prefix + txt + nl)
+                to_write = prefix + txt + nl
             else:
-                fd.write(prefix + Logger.with_color(col, txt) + nl)
+                to_write = prefix + Logger.with_color(col, txt) + nl
+
+        to_write = Logger.ansiColors(to_write)
+
+        if type(fd) == str:
+            with open(fd, 'a') as f:
+                f.write(to_write)
+                f.flush()
+
+        else:
+            fd.write(to_write)
 
     # Info shall be used as an ordinary logging facility, for every desired output.
     def info(self, txt, forced = False, **kwargs):
@@ -859,8 +910,8 @@ class SMTPHeadersAnalysis:
     }
 
     ATP_Message_Properties = {
-        'SA' : 'Safe Attachments Protection',
-        'SL' : 'Safe Links Protection',
+        'SA' : 'Safe Attachments',
+        'SL' : 'Safe Links',
     }
 
     TLCOOBClassifiers = {
@@ -957,6 +1008,78 @@ class SMTPHeadersAnalysis:
             'Email Rules',
             {
                 'JunkEmail' : logger.colored('Mail marked as Junk and moved to Junk folder', 'red'),
+            }
+        ),
+
+        'abwl' : (
+            '"AB" Whitelist (?)',
+            {
+                '0' : 'Not whitelisted (?)',
+                '1' : 'Whitelisted (?)',
+            }
+        ),
+
+        'wl' : (
+            'Message was whitelisted (?)',
+            {
+                '0' : 'Message was not whitelisted',
+                '1' : logger.colored('Message was whitelisted', 'green'),
+            }
+        ),
+
+        'pcwl' : (
+            '"PC" Whitelist (?)',
+            {
+                '0' : 'Not whitelisted (?)',
+                '1' : 'Whitelisted (?)',
+            }
+        ),
+
+        'kl' : (
+            'Unknown',
+            {
+                '0' : 'Unknown',
+                '1' : 'Unknown',
+            }
+        ),
+
+        'iwl' : (
+            '"I" Whitelist (?)',
+            {
+                '0' : 'Not whitelisted (?)',
+                '1' : 'Whitelisted (?)',
+            }
+        ),
+
+        'dwl' : (
+            'Domain-based Whitelist',
+            {
+                '0' : 'Sender\'s Domain was not whitelisted',
+                '1' : logger.colored('Sender\'s Domain was whitelisted', 'green'),
+            }
+        ),
+
+        'dkl' : (
+            'Unknown',
+            {
+                '0' : 'Unknown',
+                '1' : 'Unknown',
+            }
+        ),
+
+        'rwl' : (
+            '"R" Whitelist (?)',
+            {
+                '0' : 'Not whitelisted (?)',
+                '1' : 'Whitelisted (?)',
+            }
+        ),
+
+        'ex' : (
+            'Unknown',
+            {
+                '0' : 'Unknown',
+                '1' : 'Unknown',
             }
         ),
     }
@@ -1554,7 +1677,7 @@ class SMTPHeadersAnalysis:
             ('32', 'MS Defender ATP Message Properties',          self.testATPMessageProperties),
             ('33', 'Message Feedback Loop',                       self.testMSFBL),
             ('34', 'End-to-End Latency - Message Delivery Time',  self.testTransportEndToEndLatency),
-            ('35', 'X-MS-Oob-TLC-OOBClassifiers',                 self.testTLCOObClasifiers),
+            #('35', 'X-MS-Oob-TLC-OOBClassifiers',                 self.testTLCOObClasifiers),
             ('36', 'X-IP-Spam-Verdict',                           self.testXIPSpamVerdict),
             ('37', 'X-Amp-Result',                                self.testXAmpResult),
             ('38', 'X-IronPort-RemoteIP',                         self.testXIronPortRemoteIP),
@@ -2691,17 +2814,20 @@ Results will be unsound. Make sure you have pasted your headers with correct spa
 
     def testSuspiciousWordsInHeaders(self):
         outputs = []
-        headers = set({
-            'From', 'To', 'Subject', 'Topic', 
-        })
+        headers = set()
+
+        skip_headers = (
+            'authentication-results',
+            'received-spf',
+        )
 
         for (num, header, value) in self.headers:
-            #if header.lower().endswith('-to'): headers.add(header)
-            #if header.lower().endswith('-topic'): headers.add(header)
-            #if header.lower().endswith('-subject'): headers.add(header)
             headers.add(header.lower())
 
         for header in headers:
+            if header.lower() in skip_headers: 
+                continue
+
             (num, hdr, value) = self.getHeader(header)
             if num != -1:
                 outputs.append(self._findSuspiciousWords(num, hdr, value))
@@ -5346,7 +5472,7 @@ https://c7solutions.com/2020/09/mail-flow-to-the-correct-exchange-online-connect
 
         vvv = self.logger.colored(value, 'magenta')
         self.securityAppliances.add(value)
-        result = f'- X-Mailer header was present and contained value:\n\t- {vvv}\n'
+        result = f'- {self.logger.colored("X-Mailer","yellow")} header was present and contained value:\n\t- {vvv}\n'
 
         return {
             'header' : header,
@@ -5836,6 +5962,13 @@ def opts(argv):
 def printOutput(out):
     output = ''
 
+    testStart = '-----------------------------------------'
+    testEnd = ''
+
+    if options['format'] == 'html':
+        testStart = '>>>>>>>>>>>>>>>>>>>>>>'
+        testEnd   = '<<<<<<<<<<<<<<<<<<<<<<'
+
     if options['format'] == 'text' or options['format'] == 'html':
         width = 100
         num = 0
@@ -5875,7 +6008,7 @@ def printOutput(out):
 
             if len(v['header']) > 1 or len(value) > 1:
                 output += f'''
-------------------------------------------
+{testStart}
 ({num}) Test: {logger.colored(k, "cyan")}
 
 {logger.colored("HEADER", "blue")}: 
@@ -5887,42 +6020,214 @@ def printOutput(out):
 {logger.colored("ANALYSIS", "blue")}:
 
 {analysis}
+{testEnd}
 '''
             else:
                 output += f'''
-------------------------------------------
+{testStart}
 ({num}) Test: {logger.colored(k, "cyan")}
 
 {logger.colored("ANALYSIS", "blue")}:
 
 {analysis}
+{testEnd}
 '''
-
-        if options['format'] == 'html':
-            output2 = f'''<html>
-    <head>
-    <title>decode-spam-headers</title>
-    </head>
-    <body>
-    {output}
-    </body>
-</html>'''
-
-            output = output2.replace('\n', '<br/>').replace('\t', '&nbsp;' * 4).replace(' ', '&nbsp;')
-            output2 = output
-
-            for m in re.finditer(r'(<[^>]+>)', output, re.I):
-                a = m.group(1)
-                b = a.replace('&nbsp;', ' ')
-                output2 = output2.replace(a, b)
-
-            return Logger.replaceColorToHtml(output2)
-            #return output
 
     elif options['format'] == 'json':
         output = json.dumps(out)
 
     return output
+
+def formatToHtml(body, headers):
+    testStart = '>>>>>>>>>>>>>>>>>>>>>>'
+    testEnd   = '<<<<<<<<<<<<<<<<<<<<<<'
+
+    body = body.replace(testStart, '<div><hr/>')
+    body = body.replace(testEnd,   '</div>')
+
+    body = body.replace('\n', '<br/>\n').replace('\t', '\t' + '&nbsp;' * 4).replace(' ', '&nbsp;')
+    headers = headers.replace('\n', '<br/>\n').replace('\t', '\t' + '&nbsp;' * 4).replace(' ', '&nbsp;')
+    body2 = body
+
+    for m in re.finditer(r'(<[^>]+>)', body, re.I):
+        a = m.group(1)
+        b = a.replace('&nbsp;', ' ')
+        body2 = body2.replace(a, b)
+
+    body = body2
+
+    outputHtml = f'''
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <title>Decode Spam Headers</title>
+  </head>
+  <style>
+  body {{
+    background-color:{Logger.html_colors_map['background']};
+    color: {Logger.html_colors_map['white']};
+    font-family: Consolas, monaco, monospace;
+    font-size: 14px;
+    font-style: normal;
+    font-variant: normal;
+    font-weight: 400;
+    line-height: 20px;
+  }}
+
+  .text-white {{
+    color: {Logger.html_colors_map['white']};
+  }}
+
+  .text-grey {{
+    color: {Logger.html_colors_map['grey']};
+  }}
+
+  .text-red {{
+    color: {Logger.html_colors_map['red']};
+  }}
+
+  .text-green {{
+    color: {Logger.html_colors_map['green']};
+  }}
+
+  .text-yellow {{
+    color: {Logger.html_colors_map['yellow']};
+  }}
+
+  .text-blue {{
+    color: {Logger.html_colors_map['blue']};
+  }}
+
+  .text-magenta {{
+    color: {Logger.html_colors_map['magenta']};
+  }}  
+
+  .text-cyan {{
+    color: {Logger.html_colors_map['cyan']};
+  }}
+
+  h1 {{
+ font-family: Consolas, monaco, monospace;
+ font-size: 24px;
+ font-style: normal;
+ font-variant: normal;
+ font-weight: 700;
+ line-height: 26.4px;
+ }}
+
+ h3 {{
+ font-family: Consolas, monaco, monospace;
+ font-size: 14px;
+ font-style: normal;
+ font-variant: normal;
+ font-weight: 700;
+ line-height: 15.4px;
+ }}
+
+ p {{
+ font-family: Consolas, monaco, monospace;
+ font-size: 14px;
+ font-style: normal;
+ font-variant: normal;
+ font-weight: 400;
+ line-height: 20px;
+ }}
+
+ blockquote {{
+ font-family: Consolas, monaco, monospace;
+ font-size: 14px;
+ font-style: normal;
+ font-variant: normal;
+ font-weight: 400;
+ line-height: 30px;
+ }}
+
+ pre {{
+ font-family: Consolas, monaco, monospace;
+ font-size: 13px;
+ font-style: normal;
+ font-variant: normal;
+ font-weight: 400;
+ line-height: 18.5714px;
+ }}
+
+ summary::-webkit-details-marker {{
+  color: #00ACF3;
+  font-size: 125%;
+  margin-right: 2px;
+}}
+
+summary:focus {{
+    outline-style: none;
+}}
+
+article > details > summary {{
+    font-size: 18px;
+    margin-top: 16px;
+}}
+
+details > p {{
+    margin-left: 14px;
+}}
+
+blockquote code {{
+    background-color: rgba(0, 0, 0, .07);
+    display: block;
+    font-family: Consolas, monaco, monospace;
+    font-size: 13px;
+    font-style: normal;
+    font-variant: normal;
+    font-weight: 400;
+    line-height: 18.5714px;    
+}}
+
+a {{
+   color: {Logger.html_colors_map['green']};
+   text-decoration: none;
+}}
+
+  </style>
+  <body>
+    <div>
+        <br/>
+        <h2>
+        SMTP Headers analysis by <a href="https://github.com/mgeeky/decode-spam-headers">decode-spam-headers.py</a>
+        </h2>
+        <i style=".text-grey">(brought to you by <a style="size:8px" href="https://twitter.com/mariuszbit">@mariuszbit</a>)</i>
+        <br/>
+        <br/>
+        <br/>
+        <article>
+          <details>
+            <summary>Original SMTP Headers</summary>
+            <blockquote>
+            <code>
+{headers}
+            </code>
+            </blockquote>
+          </details>
+        </article>
+        <br/>
+    </div>
+    {body}
+  </body>
+</html>
+'''     
+    return outputHtml
+
+def colorizeOutput(out, headers):
+    if options['format'] == 'html':
+        out = Logger.htmlColors(out)
+        return formatToHtml(out, headers)
+
+    if options['format'] == 'text':
+        out = Logger.ansiColors(out)
+
+    if options['format'] == 'json' or len(options['outfile']) > 0:
+        out = Logger.noColors(out)
+
+    return out
 
 def main(argv):
     args = opts(argv)
@@ -5997,18 +6302,12 @@ def main(argv):
     an = SMTPHeadersAnalysis(logger, args.resolve, args.decode_all, testsToRun)
     out = an.parse(text)
 
-    output = printOutput(out)
+    printed = printOutput(out)
+    output = colorizeOutput(printed, text)
 
     if len(args.outfile) > 0:
-        ansi_escape = re.compile(r'\x1B(?:[@-Z\\-_]|\[[0-?]*[ -/]*[@-~])')
-        
-        output2 = output
-
-        if args.format != 'html':
-            output2 = ansi_escape.sub('', output)
-
         with open(args.outfile, 'w') as f:
-            f.write(output2)
+            f.write(output)
     else:
         print(output)
 
