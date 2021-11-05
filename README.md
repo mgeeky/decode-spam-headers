@@ -36,7 +36,7 @@ In order to embellish your Phishing HTML code before sending it to your client, 
 
 ![4.png](img/4.png)
 
-- Report can be generated into a good-looking HTML:
+- Report can be generated into a good-looking HTML (usage: `py decode-spam-headers.py headers.txt -f html -o report.html` ):
 
 ![5.png](img/5.png)
 
