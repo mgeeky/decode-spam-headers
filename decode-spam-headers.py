@@ -1813,10 +1813,11 @@ class SMTPHeadersAnalysis:
 
     @staticmethod
     def gethostbyname(name, important = True):
+    	name = name.lower()
         if not important or options['dont_resolve'] or len(name) == 0:
             return ''
 
-        if name.lower() in SMTPHeadersAnalysis.resolved.keys():
+        if name in SMTPHeadersAnalysis.resolved.keys():
             logger.dbg(f'Returning cached gethostbyname entry for: "{name}"')
             return SMTPHeadersAnalysis.resolved[name]
             
@@ -1824,8 +1825,8 @@ class SMTPHeadersAnalysis:
             logger.dbg(f'gethostbyname("{name}")...')
             res = socket.gethostbyname(name)
             if len(res) > 0:
-                logger.dbg(f'Cached gethostbyname("{name.lower()}") = "{res}"')
-                SMTPHeadersAnalysis.resolved[name.lower()] = res
+                logger.dbg(f'Cached gethostbyname("{name}") = "{res}"')
+                SMTPHeadersAnalysis.resolved[name] = res
                 return res
         except:
             pass
