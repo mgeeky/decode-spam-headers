@@ -1813,7 +1813,7 @@ class SMTPHeadersAnalysis:
 
     @staticmethod
     def gethostbyname(name, important = True):
-    	name = name.lower()
+        name = name.lower()
         if not important or options['dont_resolve'] or len(name) == 0:
             return ''
 
