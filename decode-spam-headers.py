@@ -1778,10 +1778,10 @@ class SMTPHeadersAnalysis:
         try:
             out = base64.b64decode(value)
         except:
-        	try:
-            	out = base64.b64decode(value + b'=' * (-len(value) % 4))
+            try:
+                out = base64.b64decode(value + b'=' * (-len(value) % 4))
             except:
-            	out = value
+                out = value
 
         if enc:
             out = out.decode(errors = 'ignore')
