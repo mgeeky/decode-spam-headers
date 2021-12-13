@@ -1770,6 +1770,7 @@ class SMTPHeadersAnalysis:
     @staticmethod
     def safeBase64Decode(value):
         enc = False
+
         if type(value) == str: 
             enc = True
             value = value.encode()
@@ -1777,10 +1778,13 @@ class SMTPHeadersAnalysis:
         try:
             out = base64.b64decode(value)
         except:
-            out = base64.b64decode(value + b'=' * (-len(value) % 4))
+        	try:
+            	out = base64.b64decode(value + b'=' * (-len(value) % 4))
+            except:
+            	out = value
 
         if enc:
-            out = out.decode()
+            out = out.decode(errors = 'ignore')
 
         return out
 
