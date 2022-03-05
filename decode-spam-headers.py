@@ -92,6 +92,8 @@
 #   - X-MS-Exchange-Organization-BypassFocusedInbox
 #   - X-MS-Exchange-SkipListedInternetSender
 #   - X-MS-Exchange-ExternalOriginalInternetSender
+#   - X-CNFS-Analysis
+#   - X-Authenticated-Sender
 #
 # Usage:
 #   ./decode-spam-headers [options] <smtp-headers.txt>
@@ -469,7 +471,7 @@ class SMTPHeadersAnalysis:
         'X-ICPINFO', 'x-locaweb-id', 'X-MC-User', 'mailersend', 'MailiGen', 'Mandrill', 'MarketoID', 'X-Messagebus-Info',
         'Mixmax', 'X-PM-Message-Id', 'postmark', 'X-rext', 'responsys', 'X-SFDC-User', 'salesforce', 'x-sg-', 'x-sendgrid-',
         'silverpop', '.mkt', 'X-SMTPCOM-Tracking-Number', 'X-vrfbldomain', 'verticalresponse',
-        'yesmail', 'logon', 'safelink', 'safeattach', 'appinfo',
+        'yesmail', 'logon', 'safelink', 'safeattach', 'appinfo', 'X-XS4ALL-',
     )
 
     Security_Appliances_And_Their_Headers = \
@@ -510,6 +512,8 @@ class SMTPHeadersAnalysis:
         ('Trend Micro Anti-Spam'                                 , 'X-TM-AS-'),
         ('Trend Micro Anti-Spam'                                 , 'X-TMASE-'),
         ('Trend Micro InterScan Messaging Security'              , 'X-IMSS-'),
+        ('Cloudmark Security Platform'                           , 'X-CNFS-'),
+        ('Cloudmark Security Platform'                           , 'X-CMAE-'),
     )
 
     Security_Appliances_And_Their_Values = \
@@ -1735,6 +1739,8 @@ class SMTPHeadersAnalysis:
             ('100','EOP - Bypass Focused Inbox',                  self.testBypassFocusedInbox),
             ('101','EOP - Enhanced Filtering - SkipListedInternetSender', self.testO365EnhancedFilteringSkipListedInternetSender),
             ('102','EOP - Enhanced Filtering - ExternalOriginalInternetSender', self.testO365EnhancedFilteringExternalOriginalInternetSender),
+            ('103','Cloudmark Analysis',                          self.testCloudmarkAuthority),
+            ('104','The Real Sender - via Authenticated-Sender',  self.testAuthenticatedSender),
             
 
             #
@@ -2667,6 +2673,31 @@ Results will be unsound. Make sure you have pasted your headers with correct spa
         self.addSecurityAppliance('Proofpoint Email Protection')
         return self._parseProofpoint(result, '', num, header, value)
 
+
+    def testAuthenticatedSender(self):
+        (num, header, value) = self.getHeader('X-Authenticated-Sender')
+        if num == -1: return []
+
+        result = '- This user has authenticated to the mail server to send that e-mail:\n'
+        result += f'\t- {self.logger.colored(value, "green")}\n'
+
+        (num1, header1, value1) = self.getHeader('From')
+
+        if header1 and value1:
+            if value.lower() not in value1.lower():
+                result += f'\n\t- {self.logger.colored("Mismatch with From header!", "red")}\n'
+                result += f'\t\t- Authenticated user is not the same as declared in From header:\n\n'
+                result += f'\t\t\t- Authenticated as:\t{self.logger.colored(value, "red")}\n'
+                result += f'\t\t\t- Sent e-mail as:  \t{self.logger.colored(value1, "green")}\n'
+
+        return {
+            'header': header,
+            'value' : value,
+            'analysis' : result,
+            'description' : '',
+        }
+        
+
     def testXSpamExpertsClass(self):
         (num, header, value) = self.getHeader('X-SpamExperts-Class')
         if num == -1: return []
@@ -3279,6 +3310,86 @@ Results will be unsound. Make sure you have pasted your headers with correct spa
         result = '- Trend Micro Anti-Spam XFilter\n'
         self.addSecurityAppliance('Trend Micro Anti-Spam')
         result += f'\t- {value}\n'
+
+        return {
+            'header': header,
+            'value' : value,
+            'analysis' : result,
+            'description' : '',
+        }
+
+    def testCloudmarkAuthority(self):
+        (num, header, value) = self.getHeader('X-CNFS-Analysis')
+        if num == -1: return []
+
+        result = f'- Cloudmark Authority Engine (CMAE) analysis results:\n\n'
+        value = SMTPHeadersAnalysis.flattenLine(value)
+
+        parts = {}
+
+        for part in value.split(' '):
+            pos = part.find('=')
+            if pos == -1:
+                parts['Value'] = part
+                continue
+
+            k = part[:pos]
+            v = part[pos+1:]
+
+            if k in parts.keys():
+                if not (type(parts[k]) == type([])):
+                    parts[k] = [parts[k], v]
+                else:
+                    parts[k].append(v)
+            else:
+                parts[k] = v
+
+        self.addSecurityAppliance('Cloudmark Security Platform')
+
+        for k, v in parts.items():
+            if 'v' == k:
+                result += f'\t- Version:\t\t{parts["v"]}\n'
+            
+            elif 'ts' == k:
+                try:
+                    ts = int(parts['ts'], 16)
+                    ts2 = datetime.utcfromtimestamp(ts).strftime('%Y-%m-%d %H:%M:%S')
+                    result += f'\t- Timestamp:\t\t{ts2}\n'
+
+                except Exception as e:
+                    raise
+
+
+            elif 'p' == k:
+                result += f'\t- {self.logger.colored("Possible SPAM", "red")}:\t{parts["v"]}\n'
+
+            else:
+                if type(v) == type([]):
+                    result += f'\t- {self.logger.colored(k, "magenta")} ({len(v)} entries):\n'
+                    for a in v:
+                        a1 = a
+
+                        if ':' in a1:
+                            b, c = a1.split(':')
+                            a1 = f'{self.logger.colored(c, "yellow")}\t- {b}'
+
+                            if self.decode_all:
+                                try:
+                                    dec = SMTPHeadersAnalysis.safeBase64Decode(b[:30])
+                                    hd = SMTPHeadersAnalysis.hexdump(dec.encode())
+                                    a1 += f'\n\t\t\t{hd} ...\n'
+
+                                except:
+                                    pass
+
+                        result += f'\t\t- {a1}\n'
+                else:
+                    v1 = v
+                    if ':' in v:
+                        a, b = v.split(':')
+                        v1 = f'{self.logger.colored(b, "yellow")} - {a}'
+
+                    result += f'\t- {self.logger.colored(k, "magenta")}:\t\t\t{v1}\n'
 
         return {
             'header': header,

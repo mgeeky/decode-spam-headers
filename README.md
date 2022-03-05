@@ -43,7 +43,7 @@ In order to embellish your Phishing HTML code before sending it to your client, 
 
 ### Processed headers
 
-Processed headers (more than **83+** headers are parsed):
+Processed headers (more than **85+** headers are parsed):
 
 - `X-forefront-antispam-report`
 - `X-exchange-antispam`
@@ -128,6 +128,8 @@ Processed headers (more than **83+** headers are parsed):
 - `X-MS-Exchange-Organization-BypassFocusedInbox`
 - `X-MS-Exchange-SkipListedInternetSender`
 - `X-MS-Exchange-ExternalOriginalInternetSender`
+- `X-CNFS-Analysis`
+- `X-Authenticated-Sender`
 
 
 Most of these headers are not fully documented, therefore the script is unable to pinpoint all the details, but at least it collects all I could find on them.
