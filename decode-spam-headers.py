@@ -1891,7 +1891,7 @@ class SMTPHeadersAnalysis:
                 if m1:
                     v1d = emailheader.decode_header(value)[0][0]
                     if type(v1d) == bytes:
-                        v1d = v1d.decode()
+                        v1d = v1d.decode(errors='ignore')
                     value = v1d
 
                 return (num, header, value)
@@ -1911,7 +1911,7 @@ class SMTPHeadersAnalysis:
                         if m1:
                             v1d = emailheader.decode_header(value)[0][0]
                             if type(v1d) == bytes:
-                                v1d = v1d.decode()
+                                v1d = v1d.decode(errors='ignore')
                             value = v1d
                         return (num, header, value)
 
@@ -3594,14 +3594,14 @@ Results will be unsound. Make sure you have pasted your headers with correct spa
         if m1:
             v1d = emailheader.decode_header(value)[0][0]
             if type(v1d) == bytes:
-                v1d = v1d.decode()
+                v1d = v1d.decode(errors='ignore')
             v1 = v1d
 
         m2 = re.search(r'\=\?[a-z0-9\-]+\?Q\?', v2, re.I)
         if m2:
             v2d = emailheader.decode_header(value)[0][0]
             if type(v2d) == bytes:
-                v2d = v2d.decode()
+                v2d = v2d.decode(errors='ignore')
             v2 = v2d
 
         result += f'\t- Subject:      {self.logger.colored(v1, "green")}\n'
@@ -5323,7 +5323,7 @@ Src: https://www.cisco.com/c/en/us/td/docs/security/esa/esa11-1/user_guide/b_ESA
 
                 value_decoded = emailheader.decode_header(value)[0][0]
                 if type(value_decoded) == bytes:
-                    value_decoded = value_decoded.decode()
+                    value_decoded = value_decoded.decode(errors='ignore')
 
                 hhh = self.logger.colored(header, 'magenta')
                 tmp += f'\t({num0:02}) Header: {hhh}\n'
@@ -5360,7 +5360,7 @@ Src: https://www.cisco.com/c/en/us/td/docs/security/esa/esa11-1/user_guide/b_ESA
 
         value = emailheader.decode_header(value)[0][0]
         if type(value) == bytes:
-            value = value.decode()
+            value = value.decode(errors='ignore')
 
         self.addSecurityAppliance('MS ForeFront Anti-Spam')
         result = '- Base64 encoded & encrypted Antispam Message Info:\n\n'
