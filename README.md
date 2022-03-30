@@ -353,7 +353,6 @@ C:\> py decode-spam-headers.py -l tests
              32 - MS Defender ATP Message Properties
              33 - Message Feedback Loop
              34 - End-to-End Latency - Message Delivery Time
-             35 - X-MS-Oob-TLC-OOBClassifiers
              36 - X-IP-Spam-Verdict
              37 - X-Amp-Result
              38 - X-IronPort-RemoteIP
@@ -421,7 +420,19 @@ C:\> py decode-spam-headers.py -l tests
             100 - EOP - Bypass Focused Inbox
             101 - EOP - Enhanced Filtering - SkipListedInternetSender
             102 - EOP - Enhanced Filtering - ExternalOriginalInternetSender
+            103 - Cloudmark Analysis
+            104 - The Real Sender - via Authenticated-Sender
 ```
+
+
+### HTML Report
+
+In order to generate HTML report - use the following parameters:
+
+```
+  PS> py decode-spam-headers.py headers.txt -f html -o report.html
+```
+
 
 
 ### Sample run
