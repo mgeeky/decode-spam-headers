@@ -4387,7 +4387,13 @@ Src: https://www.cisco.com/c/en/us/td/docs/security/esa/esa11-1/user_guide/b_ESA
         m = re.search(r'<?([^<@\s]+)@([^\s]+)>?', value)
         domain = ''
 
+        if not m:
+            return []
+
         if m and len(self.received_path) < 3:
+            return []
+
+        if len(m.groups()) < 2:
             return []
 
         username = m.group(1)
