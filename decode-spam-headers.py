@@ -466,12 +466,12 @@ class SMTPHeadersAnalysis:
         'mailgun', 'sendgrid', 'mailchimp', 'x-ses', 'x-avas', 'X-Gmail-Labels', 'X-vrfbldomain',
         'mandrill', 'bulk',  'sendinblue', 'amazonses', 'mailjet', 'postmark', 'postfix', 'dovecot',  'roundcube',
         'seg', '-IP', 'crosspremises', 'brightmail', 'check', 'exim',  'postfix',   'exchange', 'microsoft', 'office365',
-        'dovecot', 'sendmail', 'score', 'report', 'status', 'benchmarkemail', 'bronto', 'X-Complaints-To',
+        'dovecot', 'sendmail', 'report', 'status', 'benchmarkemail', 'bronto', 'X-Complaints-To',
         'X-Roving-ID', 'X-DynectEmail-Msg', 'X-elqPod', 'X-EMV-MemberId', 'e2ma', 'fishbowl', 'eloop', 'X-Google-Appengine-App-Id',
         'X-ICPINFO', 'x-locaweb-id', 'X-MC-User', 'mailersend', 'MailiGen', 'Mandrill', 'MarketoID', 'X-Messagebus-Info',
         'Mixmax', 'X-PM-Message-Id', 'postmark', 'X-rext', 'responsys', 'X-SFDC-User', 'salesforce', 'x-sg-', 'x-sendgrid-',
         'silverpop', '.mkt', 'X-SMTPCOM-Tracking-Number', 'X-vrfbldomain', 'verticalresponse',
-        'yesmail', 'logon', 'safelink', 'safeattach', 'appinfo', 'X-XS4ALL-',
+        'yesmail', 'logon', 'safelink', 'safeattach', 'appinfo', 'X-XS4ALL-', 'client-ip'
     )
 
     Security_Appliances_And_Their_Headers = \
@@ -491,6 +491,7 @@ class SMTPHeadersAnalysis:
         ('Exchange Online Protection - Enhanced Filtering'       , 'X-.+-ExternalOriginalInternetSender'),
         ('Exchange Server 2016 Anti-Spam'                        , 'SpamDiagnostic'),
         ('FireEye Email Security Solution'                       , 'X-FE-'),
+        ('FireEye Email Security Solution'                       , 'X-FEAS-'),
         ('FireEye Email Security Solution'                       , 'X-FireEye'),
         ('Mimecast'                                              , 'X-Mimecast-'),
         ('MS Defender Advanced Threat Protection - Safe Links'   , '-ATPSafeLinks'),
@@ -514,6 +515,8 @@ class SMTPHeadersAnalysis:
         ('Trend Micro InterScan Messaging Security'              , 'X-IMSS-'),
         ('Cloudmark Security Platform'                           , 'X-CNFS-'),
         ('Cloudmark Security Platform'                           , 'X-CMAE-'),
+        ('VIPRE Email Security'                                  , 'X-Vipre-'),
+        ('Sunbelt Software Ninja Email Security'                 , 'X-Ninja-'),
     )
 
     Security_Appliances_And_Their_Values = \
@@ -1201,7 +1204,7 @@ class SMTPHeadersAnalysis:
                 "Deal", "Debt", "Discount", "Fantastic", "In accordance with laws", "Income", "Investment", "Join millions",
                 "Lifetime", "Loans", "Luxury", "Marketing solution", "Message contains", "Mortgage rates", "Name brand",
                 "Offer", "Online marketing", "Opt in", "Pre-approved", "Quote", "Rates", "Refinance", "Removal", "Reserves the right",
-                "Score", "Search engine", "Sent in compliance", "Subject to", "Terms and conditions", "Trial", "Unlimited",
+                "Search engine", "Sent in compliance", "Subject to", "Terms and conditions", "Trial", "Unlimited",
                 "Warranty", "Web traffic", "Work from home", 
             )
         ),
@@ -1213,7 +1216,7 @@ class SMTPHeadersAnalysis:
                 "Fast viagra delivery", "Hidden", "Human growth hormone", "In accordance with laws", "Investment",
                 "Junk", "Legal", "Life insurance", "Loan", "Lottery", "Luxury car", "Medicine", "Meet singles", "Message contains",
                 "Miracle", "Money", "Multi-level marketing", "Nigerian", "Offshore", "Online degree", "Online pharmacy", "Passwords",
-                "Refinance", "Request", "Rolex", "Score", "Social security number", "Spam", "This isn't spam", "Undisclosed recipient",
+                "Refinance", "Request", "Rolex", "Social security number", "Spam", "This isn't spam", "Undisclosed recipient",
                 "University diplomas", "Unsecured credit", "Unsolicited", "US dollars", "Valium", "Viagra", "Vicodin",
                 "Warranty", "Xanax"
             )
@@ -2392,7 +2395,7 @@ Results will be unsound. Make sure you have pasted your headers with correct spa
             if skip: 
                 continue
 
-            result += f'\t- {a}\n'
+            result += f'\t- {self.logger.colored(a, "yellow")}\n'
 
         if len(result) == 0:
             return []
@@ -3506,23 +3509,29 @@ Results will be unsound. Make sure you have pasted your headers with correct spa
             if header in shown or header in SMTPHeadersAnalysis.Handled_Spam_Headers: 
                 continue
 
-            match = re.match(r'.{,5}\b([0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3})\b.{,5}', value)
+            ipaddr = ''
+            match = re.search(r'(.{,5}\b([0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3})\b.{,5})', value)
+            
             if match:
                 ipaddr = match.group(1)
 
+            elif header.lower().endswith('-ip'):
+                ipaddr = value
+
+            if len(ipaddr) > 0:
                 SMTPHeadersAnalysis.Handled_Spam_Headers.append(header)
 
                 num0 += 1
                 tmp += f'\t({num0:02}) Header: {self.logger.colored(header, "yellow")}  contained an IP address:\n'
                 
                 shown.add(header)
-                    
+
                 resolved = SMTPHeadersAnalysis.resolveAddress(ipaddr)
 
                 if len(resolved) > 0:
-                    tmp += f'\t     Value:    {self.logger.colored(ipaddr, "green")} (resolved: {resolved})\n\n'
+                    tmp += f'\t     Value    :    {self.logger.colored(ipaddr, "green")}\n\t     resolved :    {self.logger.colored(resolved, "magenta")}\n\n'
                 else:
-                    tmp += f'\t     Value:    {self.logger.colored(ipaddr, "green")}\n\n'
+                    tmp += f'\t     Value    :    {self.logger.colored(ipaddr, "green")}\n\n'
 
         if len(tmp) > 0:
             result += tmp + '\n'
@@ -3567,9 +3576,9 @@ Results will be unsound. Make sure you have pasted your headers with correct spa
         result += topicLine
 
         if len(resolved) > 0:
-            result += f'\n\t- {self.logger.colored(value, "red")} (resolved: {resolved})\n'
+            result += f'\n\t- {self.logger.colored(value, "red")}\n\t\t- resolved: {resolved}\n'
         else:
-            result += f'\n\t- {self.logger.colored(value, "red")} (not resolveable)\n'
+            result += f'\n\t- {self.logger.colored(value, "red")}\n\t\t- not resolveable\n'
 
         return {
             'header' : header,
@@ -4368,7 +4377,7 @@ Src: https://www.cisco.com/c/en/us/td/docs/security/esa/esa11-1/user_guide/b_ESA
             else:
                 result += f'\t\t- elements {len(v)}:\n'
                 for a in v:
-                    result += f'\t\t\t- {a}\n'
+                    result += f'\t\t\t- {a.strip()}\n'
 
             result += '\n'
 
@@ -5848,6 +5857,31 @@ This can lead to an internal information disclosure. This test shows potential h
         if words[0] != 'pass':
             result += self.logger.colored(f'- Received-SPF test failed', 'red') + ': Should be "pass", but was: "' + str(words[0]) + '"\n'
 
+        result += '- Decomposition:\n'
+
+        for part in value.split(';'):
+            part = part.strip()
+
+            if '=' in part:
+                s = part.split('=')
+                k = s[0]
+                v = s[1]
+
+                if k.lower() == 'client-ip':
+                    result += f'\t- {self.logger.colored("client-ip", "green") + " " * 17}: {self.logger.colored(v.strip(), "green")}'
+
+                    if self.resolve:
+                        resolved = SMTPHeadersAnalysis.resolveAddress(value)
+
+                        if len(resolved) > 0:
+                            result += f'\t(resolved: {self.logger.colored(resolved, "magenta")})'
+
+                    result += '\n'
+                else:
+                    result += f'\t- {k.strip():26}: {self.logger.colored(v.strip(), "yellow")}\n'
+            else:
+                result += f'\t- {self.logger.colored(part, "yellow")}\n'
+
         if len(result) == 0:
             return []
 
@@ -5938,26 +5972,62 @@ This can lead to an internal information disclosure. This test shows potential h
 
             try:
                 resolved.add(addr)
+
                 if self.resolve:
                     self.logger.dbg(f'testExtractIP: Resolving {addr}...')
-                    out = SMTPHeadersAnalysis.resolveAddress(ipaddr)
+                    out = SMTPHeadersAnalysis.resolveAddress(addr)
 
+                    rawAddr = addr
                     addr = self.logger.colored(addr, 'magenta')
-                    tmp += f'\t- Found IP address: ({addr}) that resolves to: {out[0]}\n'
+                    tmp += f'\n\t- Found IP address: {addr}\n'
+
+                    if out != None and len(out) > 0 and out != addr:
+                        tmp += f'\t\t- that resolves to: {out}\n'
+
+                    try:
+                        self.logger.dbg(f'testExtractIP: Collecting IP Geo metadata...')
+
+                        r = requests.get(
+                            f'http://ip-api.com/json/{rawAddr}',
+                            headers = {
+                                'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.9',
+                                'Accept-Language': 'en-US',
+                                'Cache-Control': 'max-age=0',
+                                'Connection': 'keep-alive',
+                                'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/100.0.0.0 Safari/537.36',
+                            }
+                        )
+                        out = r.json()
+
+                        if out != None and len(out) > 0 and type(out) is dict:
+                            tmp += f'\t\t- IP Geo metadata:\n'
+                            for k, v in out.items():
+                                k1 = k
+                                k = f'{k:12}'
+                                if k1.lower() in ('country', 'regionName', 'city', 'isp', 'org', 'as'):
+                                    k = self.logger.colored(k, "cyan")
+                                    v = self.logger.colored(v, "green")
+                                else:
+                                    v = self.logger.colored(v, "yellow")
+
+                                tmp += f'\t\t\t- {k}: {v}\n'
+
+                    except Exception as e:
+                        pass
                 else:
                     addr = self.logger.colored(addr, 'magenta')
-                    tmp += f'\t- Found IP address: ({addr})\n'
+                    tmp += f'\t- Found IP address: {addr}\n'
             
             except Exception as e:
                 tmp += f'\t- Found IP address: ({addr}) that wasn\'t resolved\n'
 
         if len(tmp) > 0:
             if self.resolve:
-                result = '\n\t- Extracted IP addresses from headers and attempted resolve them:\n\n'
+                result = '\n\t- Extracted IP addresses from headers and attempted to resolve them:\n\n'
             else:
                 result = '\n\t- Extracted IP addresses from headers:\n\n'
 
-            result += tmp
+            result += tmp.strip()
 
         if len(resolved) == 0:
             return []
@@ -5970,7 +6040,7 @@ This can lead to an internal information disclosure. This test shows potential h
         }
 
     def testResolveIntoIP(self):
-        domains = set(re.findall(r'([a-zA-Z0-9_\-\.]+\.[a-zA-Z]{2,})', self.text, re.I))
+        domains = set(re.findall(r'([a-z0-9_\-\.]+\.[a-zA-Z]{2,5})', self.text, re.I))
         resolved = set()
         result = ''
         tmp = ''
@@ -5996,9 +6066,13 @@ This can lead to an internal information disclosure. This test shows potential h
                     self.logger.dbg(f'testResolveIntoIP: Resolving {d}...')
                     out = SMTPHeadersAnalysis.gethostbyname(d)
 
-                    tmp += f'\t- Found Domain:   {d2}\n\t\t- that resolves to: {out}\n'
+                    tmp += f'\n\t- Found Domain:   {self.logger.colored(d2, "yellow")}\n'
+
+                    if len(out) > 0:
+                        tmp += f'\t\t- that resolves to: {self.logger.colored(out, "cyan")}\n'
+
                 else:
-                    tmp += f'\t- Found Domain:   {d2}\n'
+                    tmp += f'\t- Found Domain:   {self.logger.colored(d2, "yellow")}\n'
 
             
             except Exception as e:
@@ -6067,7 +6141,7 @@ def opts(argv):
     opt.add_argument('-l', '--list', default=False, action='store_true', help='List available tests and quit. Use it like so: --list tests')
     tst.add_argument('-i', '--include-tests', default='', metavar='tests', help='Comma-separated list of test IDs to run. Ex. --include-tests 1,3,7')
     tst.add_argument('-e', '--exclude-tests', default='', metavar='tests', help='Comma-separated list of test IDs to skip. Ex. --exclude-tests 1,3,7')
-    tst.add_argument('-r', '--resolve', default=False, action='store_true', help='Resolve IPv4 addresses / Domain names.')
+    tst.add_argument('-r', '--resolve', default=False, action='store_true', help='Resolve IPv4 addresses / Domain names & collect IP Geo metadata.')
     tst.add_argument('-R', '--dont-resolve', default=False, action='store_true', help='Do not resolve anything.')
     tst.add_argument('-a', '--decode-all', default=False, action='store_true', help='Decode all =?us-ascii?Q? mail encoded messages and print their contents.')
 
