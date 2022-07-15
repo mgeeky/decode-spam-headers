@@ -112,7 +112,7 @@
 #   - dnspython
 #   - requests
 #
-# Mariusz Banach / mgeeky, '21
+# Mariusz Banach / mgeeky, '21-'22
 # <mb [at] binary-offensive.com>
 #
 
