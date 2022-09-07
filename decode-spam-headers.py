@@ -94,6 +94,9 @@
 #   - X-MS-Exchange-ExternalOriginalInternetSender
 #   - X-CNFS-Analysis
 #   - X-Authenticated-Sender
+#   - X-Apparently-From
+#   - X-Env-Sender
+#   - Sender
 #
 # Usage:
 #   ./decode-spam-headers [options] <smtp-headers.txt>

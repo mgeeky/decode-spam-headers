@@ -9,7 +9,7 @@ Time went by, I was adding support for more and more SMTP headers - and here we 
 
 ## Info
 
-This tool accepts on input an `*.EML` or `*.txt` file with all the SMTP headers. It will then extract a subset of interesting headers and using **95+** tests will attempt to decode them as much as possible.
+This tool accepts on input an `*.EML` or `*.txt` file with all the SMTP headers. It will then extract a subset of interesting headers and using **105+** tests will attempt to decode them as much as possible.
 
 This script also extracts all IPv4 addresses and domain names and performs full DNS resolution of them.
 
@@ -130,6 +130,9 @@ Processed headers (more than **85+** headers are parsed):
 - `X-MS-Exchange-ExternalOriginalInternetSender`
 - `X-CNFS-Analysis`
 - `X-Authenticated-Sender`
+- `X-Apparently-From`
+- `X-Env-Sender`
+- `Sender`
 
 
 Most of these headers are not fully documented, therefore the script is unable to pinpoint all the details, but at least it collects all I could find on them.
@@ -323,7 +326,7 @@ C:\> py decode-spam-headers.py -l tests
               2 - Extracted IP addresses
               3 - Extracted Domains
               4 - Bad Keywords In Headers
-              5 - From Address Analysis
+              5 - Sender Address Analysis
               6 - Subject and Thread Topic Difference
               7 - Authentication-Results
               8 - ARC-Authentication-Results
@@ -422,6 +425,8 @@ C:\> py decode-spam-headers.py -l tests
             102 - EOP - Enhanced Filtering - ExternalOriginalInternetSender
             103 - Cloudmark Analysis
             104 - The Real Sender - via Authenticated-Sender
+            105 - Identified Sender Addresses
+            106 - Unsual SMTP headers
 ```
 
 
