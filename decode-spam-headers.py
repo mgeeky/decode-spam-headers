@@ -110,7 +110,7 @@
 #   - tldextract
 #   - packaging
 #   - dnspython
-#   - requests
+#   - colorama
 #
 # Mariusz Banach / mgeeky, '21-'22
 # <mb [at] binary-offensive.com>
@@ -123,6 +123,7 @@ import json
 import textwrap
 import socket
 import time
+import atexit
 import base64
 
 from html import escape
@@ -136,6 +137,15 @@ except ImportError:
     print('''
 [!] You need to install python-dateutil: 
         # pip3 install python-dateutil
+''')
+    sys.exit(1)
+
+try: 
+    import colorama
+except ImportError:
+    print('''
+[!] You need to install colorama: 
+        # pip3 install colorama
 ''')
     sys.exit(1)
 
@@ -181,6 +191,7 @@ except ImportError:
 ''')
     sys.exit(1)
 
+colorama.init()
 
 options = {
     'debug': False,
@@ -217,7 +228,6 @@ class Logger:
 
     colors_dict = {
         'error': colors_map['red'],
-        'trace': colors_map['magenta'],
         'info ': colors_map['green'],
         'debug': colors_map['grey'],
         'other': colors_map['grey'],
@@ -4405,8 +4415,9 @@ Src: https://www.cisco.com/c/en/us/td/docs/security/esa/esa11-1/user_guide/b_ESA
         if len(m.groups()) < 2:
             return []
 
-        username = m.group(1)
-        domain = m.group(2)
+        username = m.group(1).replace('<', '')
+        domain = m.group(2).replace('>', '')
+
         email = f'{username}@{domain}'
 
         firstHop = self.received_path[1]
@@ -4451,10 +4462,20 @@ Src: https://www.cisco.com/c/en/us/td/docs/security/esa/esa11-1/user_guide/b_ESA
         result += f'\t                       (first hop\'s domain: {self.logger.colored(firstHopDomain1, "cyan")})\n\n'
 
         if firstHopDomain1.lower() != senderDomain.lower():
-            response = None
+            response = []
             try:
-                if domain.endswith('.'): domain = domain[:-1]
+                if domain.endswith('.'): 
+                    domain = domain[:-1]
                 response = dns.resolver.resolve(domain, 'TXT')
+
+            except dns.resolver.NoAnswer as e:
+                response = []
+
+            except dns.resolver.NoNameservers as e:
+                response = []
+
+            except AttributeError as e:
+                response = []
 
             except Exception as e:
                 response = []
@@ -6517,3 +6538,9 @@ Use -N flag to disable console colors, or switch your console for better UI expe
 
 if __name__ == '__main__':
     main(sys.argv)
+
+
+@atexit.register
+def goodbye():
+    colorama.deinit()
+

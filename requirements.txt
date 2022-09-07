@@ -3,3 +3,4 @@ tldextract
 packaging
 dnspython
 requests
+colorama
