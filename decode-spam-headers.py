@@ -5645,7 +5645,11 @@ Src: https://www.cisco.com/c/en/us/td/docs/security/esa/esa11-1/user_guide/b_ESA
             if num != -1:
                 num1 += 1
 
-                value = value.replace('<', '').replace('>', '').replace('\t', '').replace(' ', '').strip()
+                m = re.search(r'([\w\._\+-]+@([\w.-]+\.)+[\w]{2,})', value, re.I)
+                if m:
+                    value = m.group(1)
+                else:
+                    value = value.replace('<', '').replace('>', '').replace('\t', '').replace(' ', '').strip()
 
                 headers += f'    - {hdr}\n'
                 values += f'    - {value}\n'
@@ -6431,7 +6435,8 @@ This can lead to an internal information disclosure. This test shows potential h
         }
 
     def testResolveIntoIP(self):
-        domains = set(re.findall(r'([a-z0-9_\-\.]+\.[a-zA-Z]{2,5})', self.text, re.I))
+        #domains = set(re.findall(r'([a-z0-9_\-\.]+\.[a-zA-Z]{2,})', self.text, re.I))
+        domains = set(re.findall(r'((?:[\w.-]+\.)+[\w]{2,})', self.text, re.I))
         resolved = set()
         result = ''
         tmp = ''
@@ -6448,6 +6453,8 @@ This can lead to an internal information disclosure. This test shows potential h
         for d in domains:
             if d in resolved: continue
             if d in skip: continue
+
+            if f'{d}@' in self.text: continue
 
             try:
                 resolved.add(d)
