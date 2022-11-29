@@ -447,7 +447,9 @@ class SMTPHeadersAnalysis:
     Dodgy_User_Names = (
         'action', 'postmaster', 'root', 'admin', 'administrator', 'offer',
         'test', 'it', 'account', 'hr', 'job', 'relay', 'robot', 'help', 'catchall',
-        'guest', 'spam', 'abuse', 'all', 'contact', 'nobody', 'auto', 'db', 'web', 
+        'guest', 'spam', 'abuse', 'all', 'contact', 'nobody', 'auto', 'db', 'web',  'no-reply', 'noreply',
+        'anonymous', 'amazon', 'microsoft', 'google', 'mailbox', 'group', 
+
     )
 
     Header_Keywords_That_May_Contain_Spam_Info = (
@@ -5691,7 +5693,7 @@ Src: https://www.cisco.com/c/en/us/td/docs/security/esa/esa11-1/user_guide/b_ESA
             email = f'{username}@{domain}'
 
             if username.lower() in SMTPHeadersAnalysis.Dodgy_User_Names:
-                result += self.logger.colored(f'- Username "{username}" in your sender email ({email}) is known to be blacklisted!\n', 'red')
+                result += self.logger.colored(f'- Username "{username}" in your sender email ({email}) might be increasing your SPAM score!\n', 'red')
 
         if len(result) == 0:
             return []
