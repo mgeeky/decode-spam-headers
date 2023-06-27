@@ -4,3 +4,4 @@ packaging
 dnspython
 requests
 colorama
+hexdump

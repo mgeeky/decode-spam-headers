@@ -134,6 +134,7 @@ from html import escape
 from email import header as emailheader
 from datetime import *
 from dateutil.tz import *
+from hexdump import hexdump
 
 try:
     from dateutil import parser
@@ -2405,34 +2406,34 @@ Results will be unsound. Make sure you have pasted your headers with correct spa
                 break
         return chr(sum(ord(c) for c in pair) - key - offset)
 
-    @staticmethod
-    def hexdump(data, addr = 0, num = 0):
-        s = ''
-        n = 0
-        lines = []
-        if num == 0: num = len(data)
-
-        if len(data) == 0:
-            return '<empty>'
-
-        for i in range(0, num, 16):
-            line = ''
-            line += '%04x | ' % (addr + i)
-            n += 16
-
-            for j in range(n-16, n):
-                if j >= len(data): break
-                line += '%02x ' % (data[j] & 0xff)
-
-            line += ' ' * (3 * 16 + 7 - len(line)) + ' | '
-
-            for j in range(n-16, n):
-                if j >= len(data): break
-                c = data[j] if not (data[j] < 0x20 or data[j] > 0x7e) else '.'
-                line += '%c' % c
-
-            lines.append(line)
-        return '\n'.join(lines)
+    # @staticmethod
+    # def hexdump(data, addr = 0, num = 0):
+    #     s = ''
+    #     n = 0
+    #     lines = []
+    #     if num == 0: num = len(data)
+    #
+    #     if len(data) == 0:
+    #         return '<empty>'
+    #
+    #     for i in range(0, num, 16):
+    #         line = ''
+    #         line += '%04x | ' % (addr + i)
+    #         n += 16
+    #
+    #         for j in range(n-16, n):
+    #             if j >= len(data): break
+    #             line += '%02x ' % (data[j] & 0xff)
+    #
+    #         line += ' ' * (3 * 16 + 7 - len(line)) + ' | '
+    #
+    #         for j in range(n-16, n):
+    #             if j >= len(data): break
+    #             c = data[j] if not (data[j] < 0x20 or data[j] > 0x7e) else '.'
+    #             line += '%c' % c
+    #
+    #         lines.append(line)
+    #     return '\n'.join(lines)
 
     def testEmailIntelligence(self):
         service = []
@@ -3635,7 +3636,7 @@ Results will be unsound. Make sure you have pasted your headers with correct spa
                             if self.decode_all:
                                 try:
                                     dec = SMTPHeadersAnalysis.safeBase64Decode(b[:30])
-                                    hd = SMTPHeadersAnalysis.hexdump(dec.encode())
+                                    hd = hexdump(dec.encode(), result='return')
                                     a1 += f'\n\t\t\t{hd} ...\n'
 
                                 except:
@@ -4007,7 +4008,7 @@ Results will be unsound. Make sure you have pasted your headers with correct spa
         self.addSecurityAppliance('Cisco IronPort / Email Security Appliance (ESA)')
         
         if self.decode_all:
-            dumped = SMTPHeadersAnalysis.hexdump(SMTPHeadersAnalysis.safeBase64Decode(value))
+            dumped = hexdump(SMTPHeadersAnalysis.safeBase64Decode(value).encode('utf-8'), result='return')
 
             result = f'- Cisco IronPort Data encrypted blob:\n\n'
             result += dumped + '\n'
@@ -4029,7 +4030,7 @@ Results will be unsound. Make sure you have pasted your headers with correct spa
         self.addSecurityAppliance('Cisco IronPort / Email Security Appliance (ESA)')
 
         if self.decode_all:
-            dumped = SMTPHeadersAnalysis.hexdump(SMTPHeadersAnalysis.safeBase64Decode(value))
+            dumped = hexdump(SMTPHeadersAnalysis.safeBase64Decode(value).encode('utf-8'), result='return')
 
             result = f'- Cisco IronPort Data encrypted blob:\n\n'
             result += dumped + '\n'
@@ -4284,7 +4285,7 @@ Src: https://www.cisco.com/c/en/us/td/docs/security/esa/esa11-1/user_guide/b_ESA
 
         self.addSecurityAppliance('Cisco IronPort / Email Security Appliance (ESA)')
         if self.decode_all:
-            dumped = SMTPHeadersAnalysis.hexdump(SMTPHeadersAnalysis.safeBase64Decode(value))
+            dumped = hexdump(SMTPHeadersAnalysis.safeBase64Decode(value).encode('utf-8'), result='return')
 
             result = f'- Cisco IronPort Anti-Spam result encrypted blob:\n\n'
             result += dumped + '\n'
@@ -5734,7 +5735,7 @@ Src: https://www.cisco.com/c/en/us/td/docs/security/esa/esa11-1/user_guide/b_ESA
                 tmp += value_decoded + '\n\n'
 
                 try:
-                    x = SMTPHeadersAnalysis.hexdump(base64.b64decode(value_decoded.encode()))
+                    x = hexdump(base64.b64decode(value_decoded.encode()), result='return')
                     tmp += f'\t     Base64 decoded Hexdump:\n\n'
                     tmp += x
                     tmp += '\n\n\n'
@@ -5773,7 +5774,7 @@ Src: https://www.cisco.com/c/en/us/td/docs/security/esa/esa11-1/user_guide/b_ESA
 
         if self.decode_all:
             tmp += f'\n\n\t- Base64 decoded Hexdump:\n\n'
-            tmp += SMTPHeadersAnalysis.hexdump(base64.b64decode(value))
+            tmp += hexdump(base64.b64decode(value), result='return')
             tmp += '\n\n\n'
         else:
             tmp += '\n\n\t- Use --decode-all to print its hexdump.'
