@@ -262,7 +262,11 @@ Having sent more than 60 mails already, this is what I can tell by now about Mic
 
         # Triggered on an empty text message, subject "test" - that was marked with "Domain Impersonation", however 
         # ForeFront Anti-Spam headers did not support that Domain Impersonation. Weird.
-        '22186003' : '(GUESSING) Something to do with either Text message (non-HTML) or probable Domain Impersonation'
+        '22186003' : '(GUESSING) Something to do with either Text message (non-HTML) or probable Domain Impersonation',
+
+        # Found by @ipSlav (https://github.com/mgeeky/decode-spam-headers/issues/15)
+        '42882007' : 'Missing Reply-To Address. Might be fixed by adding -ReplyTo flag to Send-MailMessage',
+        '78352004' : 'Missing Reply-To Address. Might be fixed by adding -ReplyTo flag to Send-MailMessage',
     }
 ```
 
@@ -668,6 +672,12 @@ ANALYSIS:
                 - Mail's domain should resolve to:      amazonaws.com
                 - But instead first hop resolved to:    arubacloud.pl
 ```
+
+---
+
+### Credits
+
+- [ipSlav](https://github.com/ipSlav) - for [identifying two Office365 opaque rules](https://github.com/mgeeky/decode-spam-headers/issues/15): `42882007` and `78352004`
 
 
 ---
