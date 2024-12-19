@@ -5801,8 +5801,13 @@ Src: https://www.cisco.com/c/en/us/td/docs/security/esa/esa11-1/user_guide/b_ESA
             if k not in parsed.keys():
                 parsed[k.lower()] = v
 
-        if 'ucf' in parsed.keys() and 'dest' in parsed.keys() and parsed['ucf'] == '1' and parsed['dest'] == 'J':
-            result += self.logger.colored(f'- WARNING: User created a custom mail rule that moved this message to JUNK folder!\n', "red")
+        if 'ucf' in parsed.keys() and 'dest' in parsed.keys() and parsed['ucf'] == '1':
+            if parsed['dest'] == 'J':
+                result += self.logger.colored(f'- WARNING: User created a custom mail rule that moved this message to JUNK folder!\n', "red")
+            elif parsed['dest'] == 'D':
+                result += self.logger.colored(f'- WARNING: User created a custom mail rule that moved this message to DELETED ITEMS folder!\n', "red")
+            elif parsed['dest'] == 'C':
+                result += self.logger.colored(f'- WARNING: User created a custom mail rule that moved this message to a custom (non built-in) folder!\n', "red")
 
         for k, v in parsed.items():
             elem = None
