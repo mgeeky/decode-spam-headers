@@ -6867,6 +6867,29 @@ def main(argv):
             maxTest = test
 
     text = ''
+
+    # prompt for a filename to open
+    if os.path.isfile(args.infile):
+        print(f"The file {args.infile} exists.")
+        # You can open the file here
+    else:
+        print(f"The file {args.infile} does not exist.")
+        #open a windows file requestor
+        import tkinter as tk
+        from tkinter import filedialog
+
+        # Create a root window and hide it
+        root = tk.Tk()
+        root.withdraw()
+
+        # Open the file dialog and get the file path
+        file_path = filedialog.askopenfilename()
+
+        # Print the file path
+        print(file_path)
+        args.infile = file_path
+
+
     with open(args.infile) as f:
         text = f.read()
 
