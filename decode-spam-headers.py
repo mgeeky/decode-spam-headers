@@ -6648,14 +6648,11 @@ def formatToHtml(body, headers):
     body = body.replace(testEnd,   '</div>')
 
     body = body.replace('\n', '<br/>\n').replace('\t', '\t' + '&nbsp;' * 4).replace(' ', '&nbsp;')
-    headers = headers.replace('\n', '<br/>\n').replace('\t', '\t' + '&nbsp;' * 4).replace(' ', '&nbsp;')
     body2 = body
-
     for m in re.finditer(r'(<[^>]+>)', body, re.I):
         a = m.group(1)
         b = a.replace('&nbsp;', ' ')
         body2 = body2.replace(a, b)
-
     body = body2
 
     outputHtml = f'''
@@ -6781,7 +6778,7 @@ blockquote code {{
     font-style: normal;
     font-variant: normal;
     font-weight: 400;
-    line-height: 18.5714px;    
+    line-height: 18.5714px;
 }}
 
 a {{
@@ -6804,9 +6801,9 @@ a {{
           <details>
             <summary>Original SMTP Headers</summary>
             <blockquote>
-            <code>
-{headers}
-            </code>
+            <code><pre>
+{escape(headers)}
+            </pre></code>
             </blockquote>
           </details>
         </article>
@@ -6815,7 +6812,7 @@ a {{
     {body}
   </body>
 </html>
-'''     
+'''
     return outputHtml
 
 def colorizeOutput(out, headers):
