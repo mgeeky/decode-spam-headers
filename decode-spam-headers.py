@@ -2005,7 +2005,7 @@ class SMTPHeadersAnalysis:
             ('105', 'Identified Sender Addresses',                self.testSenderAddress),
 
             # Make this last one, always
-            ('106', 'Unsual SMTP headers',                        self.testUnusualHeaders),
+            ('106', 'Unusual SMTP headers',                        self.testUnusualHeaders),
         )
 
         testsDecodeAll = (
