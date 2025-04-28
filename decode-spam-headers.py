@@ -2823,6 +2823,7 @@ Results will be unsound. Make sure you have pasted your headers with correct spa
         self.addSecurityAppliance('Office365')
 
         try:
+            # First get the tenant ID via OpenID config
             r = requests.get(f'https://login.microsoftonline.com/{value}/.well-known/openid-configuration')
             out = r.json()
 
@@ -2830,11 +2831,23 @@ Results will be unsound. Make sure you have pasted your headers with correct spa
                 m = out['error']
                 return []
 
-            result += '\n    - Organization disclosed in "X-OriginatorOrg" is a valid Office 365 Tenant:\n'
+            # Extract tenant ID from token endpoint
             tid = out['token_endpoint'].replace('https://login.microsoftonline.com/', '')
             tid = tid.replace('/oauth2/token', '')
 
+            # Now query ai.moda's Azure AD Tools API with the tenant ID
+            r2 = requests.get(f'https://azure-ad-tools.ai.moda/api/v1.0.0/lookup-by-tenant-id/{tid}')
+            out2 = r2.json()
+
+            result += '\n    - Organization disclosed in "X-OriginatorOrg" is a valid Office 365 Tenant:\n'
             result += '\t- Office365 Tenant ID: ' + self.logger.colored(tid, 'green') + '\n'
+
+            if 'displayName' in out2:
+                result += f'\t- Display Name: {self.logger.colored(out2["displayName"], "green")}\n'
+
+            if 'federationBrandName' in out2 and out2['federationBrandName']:
+                result += f'\t- Federation Brand Name: {self.logger.colored(out2["federationBrandName"], "green")}\n'
+
             tmp = ''
 
             num0 = 0
