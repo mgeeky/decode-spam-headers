@@ -4992,21 +4992,19 @@ Src: https://www.cisco.com/c/en/us/td/docs/security/esa/esa11-1/user_guide/b_ESA
                 pos += 1
                 continue
 
-            for key in keys:
-                if key in found: continue
-                tmp = False
-                if pos == 0: tmp = True
-                else: tmp = (received[pos-1] in string.whitespace)
+            if pos == 0 or (received[pos-1] in string.whitespace):
+                for key in keys:
+                    if key in found: continue
 
-                if received[pos:].lower().startswith(key + ' ') and tmp:
-                    if lastkey != '':
-                        parsed[lastkey] = received[posOfKey+len(lastkey)+1:pos].strip()
+                    if received[pos:].lower().startswith(key + ' '):
+                        if lastkey != '':
+                            parsed[lastkey] = received[posOfKey+len(lastkey)+1:pos].strip()
 
-                    lastkey = keynow = key
-                    posOfKey = pos
-                    found.add(key)
-                    pos += len(key)
-                    break
+                        lastkey = keynow = key
+                        posOfKey = pos
+                        found.add(key)
+                        pos += len(key)
+                        break
 
             pos += 1
 
