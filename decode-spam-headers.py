@@ -130,6 +130,7 @@ import time
 import atexit
 import base64
 
+from bisect import bisect
 from html import escape
 from email import header as emailheader
 from datetime import *
@@ -2095,7 +2096,7 @@ class SMTPHeadersAnalysis:
             pass
 
         return ''
-            
+
     @staticmethod
     def parseExchangeVersion(lookup):
 
@@ -2104,34 +2105,23 @@ class SMTPHeadersAnalysis:
             if ver.version == lookup:
                 return ver
 
-        lookupparsed = packaging.version.parse(lookup)
-
         # Go with version-wise comparison to fuzzily find proper version name
-        sortedversions = sorted(SMTPHeadersAnalysis.Exchange_Versions)
-
-        match = re.search(r'\d{1,}\.\d{1,}\.\d{1,}', lookup, re.I)
-        if not match:
+        try:
+            lookupparsed = packaging.version.parse(lookup)
+        except packaging.version.InvalidVersion:
             return None
 
-        for i in range(len(sortedversions)):
-            if sortedversions[i].version.startswith(lookup):
-                sortedversions[i].name = 'fuzzy match: ' + sortedversions[i].name
-                return sortedversions[i]
+        sortedversions = sorted(SMTPHeadersAnalysis.Exchange_Versions)
 
-        for i in range(len(sortedversions)):
-            prevver = packaging.version.parse('0.0')
-            nextver = packaging.version.parse('99999.0')
-            if i > 0:
-                prevver = packaging.version.parse(sortedversions[i-1].version)
-            thisver = packaging.version.parse(sortedversions[i].version)
-            if i + 1 < len(sortedversions):
-                nextver = packaging.version.parse(sortedversions[i+1].version)
+        for v in sortedversions:
+            if v.version.startswith(lookup):
+                v.name = 'fuzzy match: ' + v.name
+                return v
 
-            if lookupparsed >= thisver and lookupparsed < nextver:
-                sortedversions[i].name = 'fuzzy match: ' + sortedversions[i].name
-                return sortedversions[i]
-
-        return None
+        inspos = bisect(sortedversions, lookupparsed)
+        sortedversions[inspos].name = 'fuzzy match: {} ({})'.format(
+                sortedversions[inspos].name, lookup)
+        return sortedversions[inspos]
 
 
     def getHeader(self, _header):
@@ -5002,21 +4992,19 @@ Src: https://www.cisco.com/c/en/us/td/docs/security/esa/esa11-1/user_guide/b_ESA
                 pos += 1
                 continue
 
-            for key in keys:
-                if key in found: continue
-                tmp = False
-                if pos == 0: tmp = True
-                else: tmp = (received[pos-1] in string.whitespace)
+            if pos == 0 or (received[pos-1] in string.whitespace):
+                for key in keys:
+                    if key in found: continue
 
-                if received[pos:].lower().startswith(key + ' ') and tmp:
-                    if lastkey != '':
-                        parsed[lastkey] = received[posOfKey+len(lastkey)+1:pos].strip()
+                    if received[pos:].lower().startswith(key + ' '):
+                        if lastkey != '':
+                            parsed[lastkey] = received[posOfKey+len(lastkey)+1:pos].strip()
 
-                    lastkey = keynow = key
-                    posOfKey = pos
-                    found.add(key)
-                    pos += len(key)
-                    break
+                        lastkey = keynow = key
+                        posOfKey = pos
+                        found.add(key)
+                        pos += len(key)
+                        break
 
             pos += 1
 
