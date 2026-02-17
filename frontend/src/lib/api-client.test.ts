@@ -74,9 +74,9 @@ describe("api client", () => {
     const stream = new ReadableStream<Uint8Array>({
       start(controller) {
         controller.enqueue(encoder.encode("event: progress\n"));
-        controller.enqueue(encoder.encode("data: {\"step\": 1}\n\n"));
+        controller.enqueue(encoder.encode('data: {"step": 1}\n\n'));
         controller.enqueue(encoder.encode("event: result\n"));
-        controller.enqueue(encoder.encode("data: {\"done\": true}\n\n"));
+        controller.enqueue(encoder.encode('data: {"done": true}\n\n'));
         controller.close();
       },
     });

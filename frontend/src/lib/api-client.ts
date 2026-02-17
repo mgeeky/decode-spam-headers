@@ -42,10 +42,7 @@ export interface ApiClient {
   request<TResponse>(path: string, init?: RequestInit & { body?: unknown }): Promise<TResponse>;
   get<TResponse>(path: string, init?: RequestInit): Promise<TResponse>;
   post<TResponse, TBody>(path: string, body: TBody, init?: RequestInit): Promise<TResponse>;
-  stream<TBody, TEvent>(
-    path: string,
-    options: StreamRequestOptions<TBody, TEvent>,
-  ): Promise<void>;
+  stream<TBody, TEvent>(path: string, options: StreamRequestOptions<TBody, TEvent>): Promise<void>;
 }
 
 type Fetcher = (input: RequestInfo | URL, init?: RequestInit) => Promise<Response>;
