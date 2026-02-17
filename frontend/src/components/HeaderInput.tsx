@@ -4,7 +4,10 @@ import { type FormEvent, useEffect, useId, useRef, useState } from "react";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faXmark } from "@fortawesome/free-solid-svg-icons";
 
-const MAX_INPUT_BYTES = 1024 * 1024;
+import {
+  MAX_HEADER_INPUT_BYTES,
+  validateHeaderInput,
+} from "../lib/header-validation";
 
 type HeaderInputProps = {
   value: string;
@@ -17,18 +20,6 @@ const defaultPlaceholder =
 
 const formatCount = (count: number): string => count.toLocaleString("en-US");
 
-const validateValue = (value: string): string | null => {
-  if (value.length > MAX_INPUT_BYTES) {
-    return "Header input exceeds the 1 MB limit.";
-  }
-
-  if (value.trim().length === 0) {
-    return "Header input cannot be empty.";
-  }
-
-  return null;
-};
-
 export default function HeaderInput({
   value,
   onChange,
@@ -36,7 +27,7 @@ export default function HeaderInput({
 }: HeaderInputProps) {
   const inputId = useId();
   const errorId = useId();
-  const [error, setError] = useState<string | null>(null);
+  const [touched, setTouched] = useState(false);
   const textareaRef = useRef<HTMLTextAreaElement | null>(null);
 
   useEffect(() => {
@@ -46,7 +37,7 @@ export default function HeaderInput({
     }
 
     const handleNativeBlur = () => {
-      setError(validateValue(node.value));
+      setTouched(true);
     };
 
     node.addEventListener("blur", handleNativeBlur);
@@ -59,16 +50,16 @@ export default function HeaderInput({
   const handleInput = (event: FormEvent<HTMLTextAreaElement>) => {
     const nextValue = event.currentTarget.value;
     onChange(nextValue);
-    if (error) {
-      setError(validateValue(nextValue));
-    }
   };
 
   const handleClear = () => {
     onChange("");
-    setError(null);
+    setTouched(true);
   };
 
+  const isOversized = value.length > MAX_HEADER_INPUT_BYTES;
+  const shouldShowError = touched || isOversized;
+  const error = shouldShowError ? validateHeaderInput(value) : null;
   const hasError = Boolean(error);
   const hintText = `${formatCount(value.length)} / 1MB`;
 

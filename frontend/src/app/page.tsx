@@ -5,11 +5,14 @@ import { useEffect, useRef, useState } from "react";
 import AnalyseButton from "../components/AnalyseButton";
 import FileDropZone from "../components/FileDropZone";
 import HeaderInput from "../components/HeaderInput";
+import { MAX_HEADER_INPUT_BYTES } from "../lib/header-validation";
 
 export default function Home() {
   const [headerInput, setHeaderInput] = useState("");
   const [isAnalyzing, setIsAnalyzing] = useState(false);
   const hasHeaderInput = headerInput.trim().length > 0;
+  const isOversized = headerInput.length > MAX_HEADER_INPUT_BYTES;
+  const canAnalyse = hasHeaderInput && !isOversized;
   const analyseTimeoutRef = useRef<number | null>(null);
 
   useEffect(() => {
@@ -21,7 +24,7 @@ export default function Home() {
   }, []);
 
   const handleAnalyse = () => {
-    if (!hasHeaderInput) {
+    if (!canAnalyse) {
       return;
     }
 
@@ -69,7 +72,7 @@ export default function Home() {
                 </p>
                 <div className="mt-4 flex flex-col gap-3 sm:flex-row sm:items-center">
                   <AnalyseButton
-                    hasInput={hasHeaderInput}
+                    hasInput={canAnalyse}
                     onAnalyse={handleAnalyse}
                     isLoading={isAnalyzing}
                   />

@@ -4,7 +4,9 @@ import { type DragEventHandler, useState } from "react";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faArrowUpFromBracket } from "@fortawesome/free-solid-svg-icons";
 
-const MAX_FILE_BYTES = 1024 * 1024;
+import { MAX_HEADER_INPUT_BYTES } from "../lib/header-validation";
+
+const MAX_FILE_BYTES = MAX_HEADER_INPUT_BYTES;
 const ACCEPTED_EXTENSIONS = new Set([".eml", ".txt"]);
 const ACCEPTED_MIME_TYPES = new Set(["message/rfc822", "text/plain"]);
 
