@@ -42,9 +42,10 @@ Note: `npx vitest run src/__tests__/AnalyseButton.test.tsx` passes; Vitest emits
 - [x] User can drop an EML/TXT file and see it auto-populate the input
 - [x] Analyse button is disabled when input is empty
 - [x] Ctrl+Enter keyboard shortcut triggers the analyse action
-- [ ] Dark hacker theme is visible with correct colour palette
+- [x] Dark hacker theme is visible with correct colour palette
 - [ ] Validation shows user-friendly errors for empty and oversized input
 - [ ] `npx eslint src/` and `npx prettier --check src/` pass with zero errors
 - [ ] Run `/speckit.analyze` to verify consistency
 
 Note: Wired `FileDropZone` into the main page to populate the header input state on drop.
+Note: Applied the dark hacker palette globally via `frontend/src/app/globals.css`.
