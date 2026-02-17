@@ -4,10 +4,7 @@ import { type FormEvent, useEffect, useId, useRef, useState } from "react";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faXmark } from "@fortawesome/free-solid-svg-icons";
 
-import {
-  MAX_HEADER_INPUT_BYTES,
-  validateHeaderInput,
-} from "../lib/header-validation";
+import { MAX_HEADER_INPUT_BYTES, validateHeaderInput } from "../lib/header-validation";
 
 type HeaderInputProps = {
   value: string;

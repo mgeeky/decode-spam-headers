@@ -46,12 +46,10 @@ export default function Home() {
               Decode Suite
             </p>
             <div className="flex flex-col gap-3">
-              <h1 className="text-3xl font-semibold sm:text-4xl">
-                Decode Spam Headers
-              </h1>
+              <h1 className="text-3xl font-semibold sm:text-4xl">Decode Spam Headers</h1>
               <p className="max-w-2xl text-sm text-text/70 sm:text-base">
-                Paste SMTP headers or drop an EML/TXT file to reveal the
-                anti-spam signals baked into your message path.
+                Paste SMTP headers or drop an EML/TXT file to reveal the anti-spam signals baked
+                into your message path.
               </p>
             </div>
           </header>
@@ -63,12 +61,10 @@ export default function Home() {
               <FileDropZone onFileContent={setHeaderInput} />
 
               <div className="rounded-2xl border border-info/10 bg-surface p-6">
-                <p className="text-xs uppercase tracking-[0.2em] text-info/80">
-                  Ready To Analyse
-                </p>
+                <p className="text-xs uppercase tracking-[0.2em] text-info/80">Ready To Analyse</p>
                 <p className="mt-2 text-sm text-text/70">
-                  Once input is provided, run the analysis to reveal scoring,
-                  heuristics, and delivery path insights.
+                  Once input is provided, run the analysis to reveal scoring, heuristics, and
+                  delivery path insights.
                 </p>
                 <div className="mt-4 flex flex-col gap-3 sm:flex-row sm:items-center">
                   <AnalyseButton

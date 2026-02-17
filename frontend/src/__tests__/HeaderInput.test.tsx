@@ -39,7 +39,7 @@ const getTextarea = (container: HTMLElement): HTMLTextAreaElement => {
 };
 
 const getAlert = (container: HTMLElement): HTMLElement | null =>
-  container.querySelector("[role=\"alert\"]");
+  container.querySelector('[role="alert"]');
 
 afterEach(() => {
   while (cleanups.length > 0) {

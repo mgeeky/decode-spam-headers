@@ -44,7 +44,7 @@ Note: `npx vitest run src/__tests__/AnalyseButton.test.tsx` passes; Vitest emits
 - [x] Ctrl+Enter keyboard shortcut triggers the analyse action
 - [x] Dark hacker theme is visible with correct colour palette
 - [x] Validation shows user-friendly errors for empty and oversized input
-- [ ] `npx eslint src/` and `npx prettier --check src/` pass with zero errors
+- [x] `npx eslint src/` and `npx prettier --check src/` pass with zero errors
 - [ ] Run `/speckit.analyze` to verify consistency
 
 Note: Wired `FileDropZone` into the main page to populate the header input state on drop.

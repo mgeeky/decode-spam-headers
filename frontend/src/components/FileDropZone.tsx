@@ -104,11 +104,7 @@ export default function FileDropZone({ onFileContent }: FileDropZoneProps) {
     reader.readAsText(file);
   };
 
-  const borderClass = error
-    ? "border-spam/70"
-    : isDragging
-      ? "border-info"
-      : "border-info/40";
+  const borderClass = error ? "border-spam/70" : isDragging ? "border-info" : "border-info/40";
   const surfaceClass = isDragging ? "bg-surface" : "bg-surface/70";
 
   return (
