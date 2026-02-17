@@ -31,7 +31,9 @@ This phase implements the user-facing input layer: a multi-line textarea for pas
 - [x] T016 [US1] Create main page layout in `frontend/src/app/page.tsx` with dark hacker theme (#1e1e2e background, monospace code areas, project title). Responsive from 320px to 2560px (NFR-04)
 - [x] T017 [P] [US1] Create `frontend/src/components/HeaderInput.tsx` — multi-line textarea for SMTP headers with placeholder, character count, clear button (FontAwesome icon), monospace styling, keyboard accessible (NFR-02), validation for empty and oversized >1MB input (NFR-10). Verify `HeaderInput.test.tsx` passes (TDD Green)
 - [x] T018 [P] [US1] Create `frontend/src/components/FileDropZone.tsx` — drag-and-drop zone accepting `.eml` and `.txt` files, reads client-side via File API (FR-02), populates HeaderInput on drop, shows drag-over highlight and rejection feedback, FontAwesome upload icon. Verify `FileDropZone.test.tsx` passes (TDD Green)
-- [ ] T019 [US1] Create `frontend/src/components/AnalyseButton.tsx` — primary action button with FontAwesome analyse icon, Ctrl+Enter shortcut (FR-05), disabled when input empty, loading state during analysis (NFR-05), hacker accent colour. Verify `AnalyseButton.test.tsx` passes (TDD Green)
+- [x] T019 [US1] Create `frontend/src/components/AnalyseButton.tsx` — primary action button with FontAwesome analyse icon, Ctrl+Enter shortcut (FR-05), disabled when input empty, loading state during analysis (NFR-05), hacker accent colour. Verify `AnalyseButton.test.tsx` passes (TDD Green)
+
+Note: `npx vitest run src/__tests__/AnalyseButton.test.tsx` passes; Vitest emits existing act() environment warnings.
 
 ## Completion
 
