@@ -63,7 +63,7 @@ backend/app/engine/
   - `backend/app/engine/scanners/proofpoint.py` (tests 66–67)
   - `backend/app/engine/scanners/microsoft_general.py` (tests 31–34, 80, 83–85, 99–102)
   - `backend/app/engine/scanners/general.py` (remaining tests: 4–11, 17, 22–26, 36–37, 44–46, 68, 75–79, 82, 86–87, 90–96, 98, 103–106)
-- [ ] T014 Create `backend/app/engine/analyzer.py` — `HeaderAnalyzer` orchestrator: accepts `AnalysisRequest`, uses `HeaderParser` + `ScannerRegistry`, runs scanners with per-test timeout, collects results (marking failed tests with error status per FR-25), supports progress callback `Callable[[int, int, str], None]`. Verify `test_analyzer.py` passes (TDD Green)
+- [x] T014 Create `backend/app/engine/analyzer.py` — `HeaderAnalyzer` orchestrator: accepts `AnalysisRequest`, uses `HeaderParser` + `ScannerRegistry`, runs scanners with per-test timeout, collects results (marking failed tests with error status per FR-25), supports progress callback `Callable[[int, int, str], None]`. Verify `test_analyzer.py` passes (TDD Green)
 
 ## Completion
 
