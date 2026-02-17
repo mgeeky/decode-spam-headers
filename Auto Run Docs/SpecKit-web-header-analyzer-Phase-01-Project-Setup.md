@@ -75,4 +75,4 @@ The hacker-themed dark colour palette (from spec FR-14):
 - [x] Linting passes on both sides (`ruff check backend/`, `npx eslint src/`, `npx prettier --check src/`)
 - [x] Playwright test runner executes with `npx playwright test` (no tests yet, but config loads without error)
 - [x] TypeScript compilation succeeds with zero errors in strict mode
-- [ ] Run `/speckit.analyze` to verify consistency (attempted on 2026-02-17 in PowerShell; command not available in this environment, `speckit.analyze` not recognized)
+- [ ] Run `/speckit.analyze` to verify consistency (attempted on 2026-02-17 in PowerShell; command not available in this environment, `speckit.analyze` not recognized; re-attempted 2026-02-17 with same result)
