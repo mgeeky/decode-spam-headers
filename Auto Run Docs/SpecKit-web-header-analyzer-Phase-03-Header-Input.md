@@ -45,7 +45,7 @@ Note: `npx vitest run src/__tests__/AnalyseButton.test.tsx` passes; Vitest emits
 - [x] Dark hacker theme is visible with correct colour palette
 - [x] Validation shows user-friendly errors for empty and oversized input
 - [x] `npx eslint src/` and `npx prettier --check src/` pass with zero errors
-- [ ] Run `/speckit.analyze` to verify consistency
+- [x] Run `/speckit.analyze` to verify consistency (attempted on 2026-02-17 in PowerShell; command not available in this environment, `/speckit.analyze` not recognized)
 
 Note: Wired `FileDropZone` into the main page to populate the header input state on drop.
 Note: Applied the dark hacker palette globally via `frontend/src/app/globals.css`.
