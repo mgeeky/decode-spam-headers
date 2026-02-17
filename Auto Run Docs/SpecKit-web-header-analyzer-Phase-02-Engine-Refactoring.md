@@ -67,7 +67,7 @@ backend/app/engine/
 
 ## Completion
 
-- [ ] `pytest backend/tests/engine/` passes with all tests green
+- [x] `pytest backend/tests/engine/` passes with all tests green
 - [ ] All 106+ tests are registered in the scanner registry (`ScannerRegistry.get_all()` returns 106+ scanners)
 - [ ] Analysis of `backend/tests/fixtures/sample_headers.txt` produces results matching original CLI output
 - [ ] `ruff check backend/` passes with zero errors
