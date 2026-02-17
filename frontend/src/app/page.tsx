@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 
+import FileDropZone from "../components/FileDropZone";
 import HeaderInput from "../components/HeaderInput";
 
 export default function Home() {
@@ -30,17 +31,7 @@ export default function Home() {
             <HeaderInput value={headerInput} onChange={setHeaderInput} />
 
             <div className="flex flex-col gap-6">
-              <div className="rounded-2xl border border-dashed border-info/40 bg-surface/70 p-6 text-center">
-                <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-full border border-info/30 bg-background/40">
-                  <span className="font-mono text-xs text-info">.eml</span>
-                </div>
-                <p className="mt-4 text-sm text-text/80">
-                  Drop an EML or TXT file to auto-populate the header field.
-                </p>
-                <p className="mt-2 font-mono text-xs text-text/50">
-                  Max size 1MB
-                </p>
-              </div>
+              <FileDropZone onFileContent={setHeaderInput} />
 
               <div className="rounded-2xl border border-info/10 bg-surface p-6">
                 <p className="text-xs uppercase tracking-[0.2em] text-info/80">
