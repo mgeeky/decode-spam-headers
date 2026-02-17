@@ -2,11 +2,13 @@
 
 import { useState } from "react";
 
+import AnalyseButton from "../components/AnalyseButton";
 import FileDropZone from "../components/FileDropZone";
 import HeaderInput from "../components/HeaderInput";
 
 export default function Home() {
   const [headerInput, setHeaderInput] = useState("");
+  const hasHeaderInput = headerInput.trim().length > 0;
 
   return (
     <main className="min-h-screen bg-background text-text">
@@ -42,12 +44,7 @@ export default function Home() {
                   heuristics, and delivery path insights.
                 </p>
                 <div className="mt-4 flex flex-col gap-3 sm:flex-row sm:items-center">
-                  <button
-                    type="button"
-                    className="flex-1 rounded-full bg-accent px-5 py-3 text-sm font-semibold text-background transition hover:brightness-110 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-info"
-                  >
-                    Analyse Headers
-                  </button>
+                  <AnalyseButton hasInput={hasHeaderInput} onAnalyse={() => undefined} />
                   <div className="flex items-center gap-2 text-xs text-text/60">
                     <kbd className="rounded-md border border-info/30 bg-background/40 px-2 py-1 font-mono">
                       Ctrl
