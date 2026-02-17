@@ -66,7 +66,7 @@ The hacker-themed dark colour palette (from spec FR-14):
 - [x] T003 [P] Create `backend/app/core/config.py` with Pydantic BaseSettings for CORS origins, rate limit thresholds, analysis timeout (30s), and debug flag — all configurable via environment variables
 - [x] T004 [P] Create `frontend/src/types/analysis.ts` with TypeScript interfaces: `HeaderInput`, `AnalysisConfig` (test IDs, resolve flag, decode-all flag), `TestResult` (id, name, header, value, analysis, description, severity, status), `AnalysisReport` (results, hopChain, securityAppliances, metadata), `AnalysisProgress` (current test, total, percentage, elapsed). Refer to `.specify/specs/1-web-header-analyzer/data-model.md` for the complete entity definitions
 - [x] T005 [P] Create `frontend/src/lib/api-client.ts` — API client abstraction wrapping fetch with base URL from environment, JSON defaults, error handling, and typed response generics. Must support SSE streaming via ReadableStream for the analysis endpoint
-- [ ] T006 [P] Create `frontend/src/styles/design-tokens.ts` — centralised design tokens: colours (#1e1e2e background, #282a36 surface, #f8f8f2 text, #ff5555 spam, #ffb86c suspicious, #50fa7b clean, #bd93f9 accent), font families (mono/sans), spacing scale, and border-radius values
+- [x] T006 [P] Create `frontend/src/styles/design-tokens.ts` — centralised design tokens: colours (#1e1e2e background, #282a36 surface, #f8f8f2 text, #ff5555 spam, #ffb86c suspicious, #50fa7b clean, #bd93f9 accent), font families (mono/sans), spacing scale, and border-radius values
 
 ## Completion
 
