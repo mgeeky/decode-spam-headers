@@ -1,4 +1,12 @@
+"use client";
+
+import { useState } from "react";
+
+import HeaderInput from "../components/HeaderInput";
+
 export default function Home() {
+  const [headerInput, setHeaderInput] = useState("");
+
   return (
     <main className="min-h-screen bg-background text-text">
       <div className="min-h-screen bg-[radial-gradient(900px_circle_at_15%_10%,rgba(139,233,253,0.12),transparent_55%),radial-gradient(700px_circle_at_85%_80%,rgba(189,147,249,0.12),transparent_60%)]">
@@ -19,25 +27,7 @@ export default function Home() {
           </header>
 
           <section className="grid gap-6 lg:grid-cols-[2fr_1fr]">
-            <div className="rounded-2xl border border-info/10 bg-surface p-6 shadow-[0_0_40px_rgba(15,23,42,0.45)]">
-              <div className="flex items-center justify-between text-xs uppercase tracking-[0.2em] text-info/90">
-                <span>Header Input</span>
-                <span className="font-mono text-[10px] text-text/50">
-                  0 / 1MB
-                </span>
-              </div>
-              <div className="mt-4 rounded-xl border border-info/20 bg-background/60 p-4 font-mono text-sm text-text/80 sm:text-base">
-                Paste SMTP headers here. Each line is parsed for sender,
-                authentication, and delivery hops.
-              </div>
-              <div className="mt-3 flex flex-wrap items-center gap-2 text-xs text-text/50">
-                <span>Tip:</span>
-                <span className="font-mono">Ctrl</span>
-                <span>+</span>
-                <span className="font-mono">Enter</span>
-                <span>to analyse.</span>
-              </div>
-            </div>
+            <HeaderInput value={headerInput} onChange={setHeaderInput} />
 
             <div className="flex flex-col gap-6">
               <div className="rounded-2xl border border-dashed border-info/40 bg-surface/70 p-6 text-center">
