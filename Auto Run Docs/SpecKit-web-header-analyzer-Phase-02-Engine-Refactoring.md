@@ -71,5 +71,5 @@ backend/app/engine/
 - [x] All 106+ tests are registered in the scanner registry (`ScannerRegistry.get_all()` returns 106+ scanners)
   - Verified `ScannerRegistry.get_all()` returns 106 scanners (IDs 1-106, none missing).
 - [x] Analysis of `backend/tests/fixtures/sample_headers.txt` produces results matching original CLI output
-- [ ] `ruff check backend/` passes with zero errors
+- [x] `ruff check backend/` passes with zero errors
 - [ ] Run `/speckit.analyze` to verify consistency

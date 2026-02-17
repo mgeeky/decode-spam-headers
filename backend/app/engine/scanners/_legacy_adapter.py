@@ -1,14 +1,13 @@
 from __future__ import annotations
 
-from dataclasses import dataclass
 import importlib.util
+from dataclasses import dataclass
 from pathlib import Path
 from typing import Iterable
 
 from app.engine.logger import Logger as EngineLogger
 from app.engine.models import Severity, TestResult, TestStatus
 from app.engine.parser import ParsedHeader
-
 
 _LEGACY_MODULE = None
 _TEST_CATALOG: dict[int, tuple[str, str]] | None = None
@@ -189,7 +188,9 @@ def _normalize_payload(payload: object) -> tuple[str, str, str, str] | None:
     return None
 
 
-def _combine_payloads(payloads: list[tuple[str, str, str, str]]) -> tuple[str, str, str, str]:
+def _combine_payloads(
+    payloads: list[tuple[str, str, str, str]]
+) -> tuple[str, str, str, str]:
     headers: list[str] = []
     values: list[str] = []
     analyses: list[str] = []
@@ -284,7 +285,9 @@ class LegacyScanner:
         )
 
 
-def build_scanners(test_ids: Iterable[int], category: str | None = None) -> list[LegacyScanner]:
+def build_scanners(
+    test_ids: Iterable[int], category: str | None = None
+) -> list[LegacyScanner]:
     catalog, _array_ids = _load_test_catalog()
     scanners: list[LegacyScanner] = []
     for test_id in test_ids:
@@ -292,6 +295,8 @@ def build_scanners(test_ids: Iterable[int], category: str | None = None) -> list
             raise ValueError(f"Unknown test id: {test_id}")
         name, method_name = catalog[test_id]
         scanners.append(
-            LegacyScanner(id=test_id, name=name, method_name=method_name, category=category)
+            LegacyScanner(
+                id=test_id, name=name, method_name=method_name, category=category
+            )
         )
     return scanners

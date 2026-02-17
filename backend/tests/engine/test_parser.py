@@ -6,7 +6,6 @@ import pytest
 
 from app.engine.parser import HeaderParser
 
-
 FIXTURES_DIR = Path(__file__).resolve().parents[1] / "fixtures"
 
 

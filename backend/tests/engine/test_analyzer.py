@@ -5,7 +5,6 @@ from pathlib import Path
 from app.engine.analyzer import HeaderAnalyzer
 from app.engine.models import AnalysisRequest, AnalysisResult, TestResult
 
-
 FIXTURES_DIR = Path(__file__).resolve().parents[1] / "fixtures"
 
 

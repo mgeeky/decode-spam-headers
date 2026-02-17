@@ -93,7 +93,8 @@ class Logger:
 
                 if pos1 == -1:
                     raise ValueError(
-                        "Output colors mismatch - could not find pos of end of color number!"
+                        "Output colors mismatch - could not find pos of end of "
+                        "color number!"
                     )
 
                 c = int(s[pos : pos + pos1])

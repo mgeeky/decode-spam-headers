@@ -1,15 +1,22 @@
 from __future__ import annotations
 
-from concurrent.futures import ThreadPoolExecutor, TimeoutError as FutureTimeoutError
+from concurrent.futures import ThreadPoolExecutor
+from concurrent.futures import TimeoutError as FutureTimeoutError
 from time import perf_counter
 from typing import Callable
 
-from .models import AnalysisRequest, AnalysisResult, ReportMetadata, Severity, TestResult, TestStatus
+from .models import (
+    AnalysisRequest,
+    AnalysisResult,
+    ReportMetadata,
+    Severity,
+    TestResult,
+    TestStatus,
+)
 from .parser import HeaderParser, ParsedHeader
 from .scanner_base import BaseScanner
 from .scanner_registry import ScannerRegistry
 from .scanners._legacy_adapter import configure_legacy
-
 
 ProgressCallback = Callable[[int, int, str], None]
 
@@ -111,9 +118,11 @@ class HeaderAnalyzer:
             return future.result(timeout=self._per_test_timeout_seconds)
         except FutureTimeoutError as exc:
             future.cancel()
-            raise TimeoutError(
-                f"Test {scanner.id} timed out after {self._per_test_timeout_seconds:.2f}s"
-            ) from exc
+            message = (
+                f"Test {scanner.id} timed out after "
+                f"{self._per_test_timeout_seconds:.2f}s"
+            )
+            raise TimeoutError(message) from exc
         finally:
             executor.shutdown(wait=False, cancel_futures=True)
 

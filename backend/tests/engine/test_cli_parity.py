@@ -7,7 +7,6 @@ from app.engine.analyzer import HeaderAnalyzer
 from app.engine.logger import Logger as EngineLogger
 from app.engine.models import AnalysisRequest, TestStatus
 
-
 FIXTURES_DIR = Path(__file__).resolve().parents[1] / "fixtures"
 
 

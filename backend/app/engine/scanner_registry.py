@@ -1,10 +1,10 @@
 from __future__ import annotations
 
-from dataclasses import dataclass
-from importlib import import_module
 import inspect
 import pkgutil
 import re
+from dataclasses import dataclass
+from importlib import import_module
 from pathlib import Path
 from typing import TYPE_CHECKING, Iterable
 
@@ -44,7 +44,9 @@ class ScannerRegistry:
         discovered = _discover_scanners()
         if discovered:
             self._scanners = _dedupe_scanners(discovered)
-            self._category_map = _build_category_map(scanner.id for scanner in self._scanners)
+            self._category_map = _build_category_map(
+                scanner.id for scanner in self._scanners
+            )
         else:
             tests = _load_tests_from_monolith()
             self._category_map = _build_category_map(test_id for test_id, _ in tests)
@@ -99,11 +101,11 @@ def _discover_scanners() -> list[BaseScanner]:
 def _extract_scanners(module: object) -> list[BaseScanner]:
     scanners: list[BaseScanner] = []
     if hasattr(module, "SCANNERS"):
-        declared = getattr(module, "SCANNERS")
+        declared = module.SCANNERS
         if isinstance(declared, list | tuple):
             scanners.extend(declared)
-    if hasattr(module, "get_scanners") and callable(getattr(module, "get_scanners")):
-        declared = getattr(module, "get_scanners")()
+    if hasattr(module, "get_scanners") and callable(module.get_scanners):
+        declared = module.get_scanners()
         if isinstance(declared, list | tuple):
             scanners.extend(declared)
 
