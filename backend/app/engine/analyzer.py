@@ -8,6 +8,7 @@ from .models import AnalysisRequest, AnalysisResult, ReportMetadata, Severity, T
 from .parser import HeaderParser, ParsedHeader
 from .scanner_base import BaseScanner
 from .scanner_registry import ScannerRegistry
+from .scanners._legacy_adapter import configure_legacy
 
 
 ProgressCallback = Callable[[int, int, str], None]
@@ -34,6 +35,11 @@ class HeaderAnalyzer:
         progress_callback: ProgressCallback | None = None,
     ) -> AnalysisResult:
         start = perf_counter()
+        configure_legacy(
+            resolve=request.config.resolve,
+            decode_all=request.config.decode_all,
+            include_unusual=True,
+        )
         headers = self._parser.parse(request.headers)
         scanners = self._select_scanners(request)
         total_tests = len(scanners)

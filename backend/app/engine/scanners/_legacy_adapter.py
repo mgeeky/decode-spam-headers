@@ -16,7 +16,22 @@ _ARRAY_TESTS: set[int] | None = None
 _BASE_HANDLED: list[str] | None = None
 _BASE_APPLIANCES: set[str] | None = None
 _CONTEXT_SIGNATURE: tuple[tuple[str, str], ...] | None = None
+_CONTEXT_CONFIG: tuple[bool, bool, bool] | None = None
 _CONTEXT_ANALYSIS = None
+
+_LEGACY_CONFIG = {
+    "resolve": False,
+    "decode_all": False,
+    "include_unusual": True,
+}
+
+
+def configure_legacy(
+    *, resolve: bool, decode_all: bool, include_unusual: bool = True
+) -> None:
+    _LEGACY_CONFIG["resolve"] = bool(resolve)
+    _LEGACY_CONFIG["decode_all"] = bool(decode_all)
+    _LEGACY_CONFIG["include_unusual"] = bool(include_unusual)
 
 
 def _load_legacy_module() -> object:
@@ -38,11 +53,7 @@ def _load_legacy_module() -> object:
     module = importlib.util.module_from_spec(spec)
     spec.loader.exec_module(module)
 
-    try:
-        module.logger.options["log"] = "none"
-        module.logger.options["nocolor"] = True
-    except Exception:
-        pass
+    _apply_legacy_options(module)
 
     _LEGACY_MODULE = module
     return module
@@ -75,6 +86,26 @@ def _load_test_catalog() -> tuple[dict[int, tuple[str, str]], set[int]]:
     return catalog, array_ids
 
 
+def _apply_legacy_options(module: object) -> None:
+    options = getattr(module, "options", None)
+    if isinstance(options, dict):
+        options["dont_resolve"] = not _LEGACY_CONFIG["resolve"]
+        options["nocolor"] = True
+        options["format"] = "json"
+        options["log"] = "none"
+        options["debug"] = False
+        options["verbose"] = False
+
+    try:
+        module.logger.options["log"] = "none"
+        module.logger.options["nocolor"] = True
+        module.logger.options["format"] = "json"
+        module.logger.options["debug"] = False
+        module.logger.options["verbose"] = False
+    except Exception:
+        pass
+
+
 def _reset_legacy_state(module: object) -> None:
     if _BASE_HANDLED is not None:
         module.SMTPHeadersAnalysis.Handled_Spam_Headers = list(_BASE_HANDLED)
@@ -97,22 +128,37 @@ def _build_text(headers: list[ParsedHeader]) -> str:
 
 
 def _get_analysis(headers: list[ParsedHeader]) -> object:
-    global _CONTEXT_SIGNATURE, _CONTEXT_ANALYSIS
+    global _CONTEXT_SIGNATURE, _CONTEXT_ANALYSIS, _CONTEXT_CONFIG
     module = _load_legacy_module()
-    _load_test_catalog()
+    catalog, _array_ids = _load_test_catalog()
+    _apply_legacy_options(module)
+
+    tests_to_run = sorted(catalog.keys())
+    config_signature = (
+        _LEGACY_CONFIG["resolve"],
+        _LEGACY_CONFIG["decode_all"],
+        _LEGACY_CONFIG["include_unusual"],
+    )
 
     signature = _headers_signature(headers)
-    if _CONTEXT_ANALYSIS is None or _CONTEXT_SIGNATURE != signature:
+    if (
+        _CONTEXT_ANALYSIS is None
+        or _CONTEXT_SIGNATURE != signature
+        or _CONTEXT_CONFIG != config_signature
+    ):
         _reset_legacy_state(module)
-        analyzer = module.SMTPHeadersAnalysis(module.logger, resolve=False, decode_all=False)
+        analyzer = module.SMTPHeadersAnalysis(
+            module.logger,
+            resolve=_LEGACY_CONFIG["resolve"],
+            decode_all=_LEGACY_CONFIG["decode_all"],
+            testsToRun=tests_to_run,
+            includeUnusual=_LEGACY_CONFIG["include_unusual"],
+        )
         analyzer.headers = [(h.index, h.name, h.value) for h in headers]
         analyzer.text = _build_text(headers)
-        try:
-            analyzer.logger.options["log"] = "none"
-            analyzer.logger.options["nocolor"] = True
-        except Exception:
-            pass
+        _apply_legacy_options(module)
         _CONTEXT_SIGNATURE = signature
+        _CONTEXT_CONFIG = config_signature
         _CONTEXT_ANALYSIS = analyzer
     return _CONTEXT_ANALYSIS
 
@@ -148,21 +194,51 @@ def _combine_payloads(payloads: list[tuple[str, str, str, str]]) -> tuple[str, s
     values: list[str] = []
     analyses: list[str] = []
     descriptions: list[str] = []
+    saw_header_dash = False
+    saw_value_dash = False
+    saw_header_empty = False
+    saw_value_empty = False
 
     for header, value, analysis, description in payloads:
-        if header and header != "-":
+        if header == "-":
+            saw_header_dash = True
+        elif header:
             headers.append(header)
-        if value and value != "-":
+        else:
+            saw_header_empty = True
+
+        if value == "-":
+            saw_value_dash = True
+        elif value:
             values.append(value)
+        else:
+            saw_value_empty = True
+
         if analysis:
             analyses.append(analysis)
         if description:
             descriptions.append(description)
 
-    header_name = ", ".join(dict.fromkeys(headers)) if headers else "-"
-    header_value = "\n".join(values) if values else "-"
-    analysis = "\n\n".join(analyses).strip()
-    description = "\n\n".join(descriptions).strip()
+    if headers:
+        header_name = ", ".join(dict.fromkeys(headers))
+    elif saw_header_dash:
+        header_name = "-"
+    elif saw_header_empty:
+        header_name = ""
+    else:
+        header_name = "-"
+
+    if values:
+        header_value = "\n".join(values)
+    elif saw_value_dash:
+        header_value = "-"
+    elif saw_value_empty:
+        header_value = ""
+    else:
+        header_value = "-"
+
+    analysis = "\n\n".join(analyses)
+    description = "\n\n".join(descriptions)
     return header_name, header_value, analysis, description
 
 
