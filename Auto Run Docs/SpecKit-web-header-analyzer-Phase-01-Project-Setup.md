@@ -71,7 +71,7 @@ The hacker-themed dark colour palette (from spec FR-14):
 ## Completion
 
 - [x] Backend starts with `uvicorn backend.app.main:app` and returns 200 on root
-- [ ] Frontend starts with `npm run dev` and renders a blank page
+- [x] Frontend starts with `npm run dev` and renders a blank page
 - [ ] Linting passes on both sides (`ruff check backend/`, `npx eslint src/`, `npx prettier --check src/`)
 - [ ] Playwright test runner executes with `npx playwright test` (no tests yet, but config loads without error)
 - [ ] TypeScript compilation succeeds with zero errors in strict mode
