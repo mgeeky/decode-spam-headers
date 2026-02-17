@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 
 import AnalyseButton from "../components/AnalyseButton";
 import FileDropZone from "../components/FileDropZone";
@@ -8,7 +8,31 @@ import HeaderInput from "../components/HeaderInput";
 
 export default function Home() {
   const [headerInput, setHeaderInput] = useState("");
+  const [isAnalyzing, setIsAnalyzing] = useState(false);
   const hasHeaderInput = headerInput.trim().length > 0;
+  const analyseTimeoutRef = useRef<number | null>(null);
+
+  useEffect(() => {
+    return () => {
+      if (analyseTimeoutRef.current !== null) {
+        window.clearTimeout(analyseTimeoutRef.current);
+      }
+    };
+  }, []);
+
+  const handleAnalyse = () => {
+    if (!hasHeaderInput) {
+      return;
+    }
+
+    setIsAnalyzing(true);
+    if (analyseTimeoutRef.current !== null) {
+      window.clearTimeout(analyseTimeoutRef.current);
+    }
+    analyseTimeoutRef.current = window.setTimeout(() => {
+      setIsAnalyzing(false);
+    }, 800);
+  };
 
   return (
     <main className="min-h-screen bg-background text-text">
@@ -44,7 +68,11 @@ export default function Home() {
                   heuristics, and delivery path insights.
                 </p>
                 <div className="mt-4 flex flex-col gap-3 sm:flex-row sm:items-center">
-                  <AnalyseButton hasInput={hasHeaderInput} onAnalyse={() => undefined} />
+                  <AnalyseButton
+                    hasInput={hasHeaderInput}
+                    onAnalyse={handleAnalyse}
+                    isLoading={isAnalyzing}
+                  />
                   <div className="flex items-center gap-2 text-xs text-text/60">
                     <kbd className="rounded-md border border-info/30 bg-background/40 px-2 py-1 font-mono">
                       Ctrl

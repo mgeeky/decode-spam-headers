@@ -41,7 +41,7 @@ Note: `npx vitest run src/__tests__/AnalyseButton.test.tsx` passes; Vitest emits
 - [x] User can paste text into the header input area
 - [x] User can drop an EML/TXT file and see it auto-populate the input
 - [x] Analyse button is disabled when input is empty
-- [ ] Ctrl+Enter keyboard shortcut triggers the analyse action
+- [x] Ctrl+Enter keyboard shortcut triggers the analyse action
 - [ ] Dark hacker theme is visible with correct colour palette
 - [ ] Validation shows user-friendly errors for empty and oversized input
 - [ ] `npx eslint src/` and `npx prettier --check src/` pass with zero errors
