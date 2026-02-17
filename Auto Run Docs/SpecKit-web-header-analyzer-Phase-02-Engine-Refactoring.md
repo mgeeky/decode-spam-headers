@@ -49,7 +49,7 @@ backend/app/engine/
 - [x] T008 Create `backend/app/engine/__init__.py` and `backend/app/engine/models.py` — Pydantic models for `AnalysisRequest`, `AnalysisResult`, `TestResult`, `HopChainNode`, `SecurityAppliance`. Refer to `.specify/specs/1-web-header-analyzer/data-model.md` for field definitions and severity enum values (spam→#ff5555, suspicious→#ffb86c, clean→#50fa7b, info→#bd93f9)
 - [x] T009 Create `backend/app/engine/logger.py` — extract Logger class from `decode-spam-headers.py` (lines 209–419), adapt to use Python `logging` module instead of direct stdout
 - [x] T010 Create `backend/app/engine/parser.py` — extract header parsing from `SMTPHeadersAnalysis.collect()` and `getHeader()` (lines ~2137–2270). Expose `HeaderParser.parse(raw_text: str) -> list[ParsedHeader]` including MIME boundary and line-break handling. Verify `test_parser.py` passes (TDD Green)
-- [ ] T011 Create `backend/app/engine/scanner_base.py` — abstract `BaseScanner` (Protocol or ABC) with interface: `id: int`, `name: str`, `run(headers: list[ParsedHeader]) -> TestResult | None`
+- [x] T011 Create `backend/app/engine/scanner_base.py` — abstract `BaseScanner` (Protocol or ABC) with interface: `id: int`, `name: str`, `run(headers: list[ParsedHeader]) -> TestResult | None` (implemented Protocol in `backend/app/engine/scanner_base.py`)
 - [ ] T012 Create `backend/app/engine/scanner_registry.py` — `ScannerRegistry` with auto-discovery: `get_all()`, `get_by_ids(ids)`, `list_tests()`. Verify `test_scanner_registry.py` passes (TDD Green)
 - [ ] T013 [P] Create scanner modules by extracting test methods from `SMTPHeadersAnalysis` into `backend/app/engine/scanners/`. Each file implements `BaseScanner`:
   - `backend/app/engine/scanners/received_headers.py` (tests 1–3)
