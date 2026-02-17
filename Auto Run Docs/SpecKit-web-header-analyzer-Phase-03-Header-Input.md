@@ -37,7 +37,7 @@ Note: `npx vitest run src/__tests__/AnalyseButton.test.tsx` passes; Vitest emits
 
 ## Completion
 
-- [ ] All vitest tests pass: `npx vitest run src/__tests__/HeaderInput.test.tsx src/__tests__/FileDropZone.test.tsx src/__tests__/AnalyseButton.test.tsx`
+- [x] All vitest tests pass: `npx vitest run src/__tests__/HeaderInput.test.tsx src/__tests__/FileDropZone.test.tsx src/__tests__/AnalyseButton.test.tsx`
 - [ ] User can paste text into the header input area
 - [ ] User can drop an EML/TXT file and see it auto-populate the input
 - [ ] Analyse button is disabled when input is empty
