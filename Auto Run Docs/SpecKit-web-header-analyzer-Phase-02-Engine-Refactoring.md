@@ -51,7 +51,8 @@ backend/app/engine/
 - [x] T010 Create `backend/app/engine/parser.py` — extract header parsing from `SMTPHeadersAnalysis.collect()` and `getHeader()` (lines ~2137–2270). Expose `HeaderParser.parse(raw_text: str) -> list[ParsedHeader]` including MIME boundary and line-break handling. Verify `test_parser.py` passes (TDD Green)
 - [x] T011 Create `backend/app/engine/scanner_base.py` — abstract `BaseScanner` (Protocol or ABC) with interface: `id: int`, `name: str`, `run(headers: list[ParsedHeader]) -> TestResult | None` (implemented Protocol in `backend/app/engine/scanner_base.py`)
 - [x] T012 Create `backend/app/engine/scanner_registry.py` — `ScannerRegistry` with auto-discovery: `get_all()`, `get_by_ids(ids)`, `list_tests()`. Verify `test_scanner_registry.py` passes (TDD Green)
-- [ ] T013 [P] Create scanner modules by extracting test methods from `SMTPHeadersAnalysis` into `backend/app/engine/scanners/`. Each file implements `BaseScanner`:
+- [x] T013 [P] Create scanner modules by extracting test methods from `SMTPHeadersAnalysis` into `backend/app/engine/scanners/`. Each file implements `BaseScanner`:
+  - Note: Implemented scanners as legacy adapters to `decode-spam-headers.py`, including test 35 to reach 106 scanners.
   - `backend/app/engine/scanners/received_headers.py` (tests 1–3)
   - `backend/app/engine/scanners/forefront_antispam.py` (tests 12–16, 63–64)
   - `backend/app/engine/scanners/spamassassin.py` (tests 18–21, 74)
