@@ -128,4 +128,49 @@ describe("FileDropZone", () => {
     expect(alert?.textContent ?? "").toMatch(/\.eml/i);
     expect(alert?.textContent ?? "").toMatch(/\.txt/i);
   });
+
+  it("opens the file picker on keyboard activation", () => {
+    const { container } = render(<FileDropZone onFileContent={() => undefined} />);
+    const dropZone = getDropZone(container);
+    const input = container.querySelector('input[type="file"]') as HTMLInputElement | null;
+    expect(input).not.toBeNull();
+    if (!input) {
+      return;
+    }
+
+    const clickSpy = vi.spyOn(input, "click");
+
+    act(() => {
+      dropZone.dispatchEvent(new KeyboardEvent("keydown", { key: "Enter", bubbles: true }));
+    });
+
+    expect(clickSpy).toHaveBeenCalled();
+    clickSpy.mockRestore();
+  });
+
+  it("reads selected file content from the file picker", () => {
+    const handleContent = vi.fn();
+    const restore = mockFileReader("Header from input");
+    const { container } = render(<FileDropZone onFileContent={handleContent} />);
+    const input = container.querySelector('input[type="file"]') as HTMLInputElement | null;
+    expect(input).not.toBeNull();
+    if (!input) {
+      restore();
+      return;
+    }
+
+    const file = new File(["Header from input"], "sample.eml", { type: "message/rfc822" });
+    Object.defineProperty(input, "files", {
+      value: [file],
+      writable: false,
+    });
+
+    act(() => {
+      input.dispatchEvent(new Event("change", { bubbles: true }));
+    });
+
+    restore();
+
+    expect(handleContent).toHaveBeenCalledWith("Header from input");
+  });
 });

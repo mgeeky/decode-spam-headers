@@ -1,6 +1,13 @@
 "use client";
 
-import { type DragEventHandler, useState } from "react";
+import {
+  type ChangeEvent,
+  type DragEventHandler,
+  type KeyboardEvent,
+  useId,
+  useRef,
+  useState,
+} from "react";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faArrowUpFromBracket } from "@fortawesome/free-solid-svg-icons";
 
@@ -54,6 +61,32 @@ const getFirstFile = (transfer: DataTransfer | null): File | null => {
 export default function FileDropZone({ onFileContent }: FileDropZoneProps) {
   const [isDragging, setIsDragging] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const helperTextId = useId();
+  const errorTextId = useId();
+  const fileInputRef = useRef<HTMLInputElement | null>(null);
+
+  const handleFileSelection = (file: File) => {
+    if (!isSupportedFile(file)) {
+      setError("Only .eml or .txt files are supported.");
+      return;
+    }
+
+    if (file.size > MAX_FILE_BYTES) {
+      setError("File exceeds the 1 MB limit.");
+      return;
+    }
+
+    const reader = new FileReader();
+    reader.onload = () => {
+      const result = reader.result;
+      const content = typeof result === "string" ? result : "";
+      onFileContent(content);
+    };
+    reader.onerror = () => {
+      setError("Unable to read the dropped file.");
+    };
+    reader.readAsText(file);
+  };
 
   const handleDragOver: DragEventHandler<HTMLDivElement> = (event) => {
     event.preventDefault();
@@ -82,53 +115,72 @@ export default function FileDropZone({ onFileContent }: FileDropZoneProps) {
       return;
     }
 
-    if (!isSupportedFile(file)) {
-      setError("Only .eml or .txt files are supported.");
-      return;
-    }
+    handleFileSelection(file);
+  };
 
-    if (file.size > MAX_FILE_BYTES) {
-      setError("File exceeds the 1 MB limit.");
-      return;
-    }
+  const handleSelectFile = () => {
+    fileInputRef.current?.click();
+  };
 
-    const reader = new FileReader();
-    reader.onload = () => {
-      const result = reader.result;
-      const content = typeof result === "string" ? result : "";
-      onFileContent(content);
-    };
-    reader.onerror = () => {
-      setError("Unable to read the dropped file.");
-    };
-    reader.readAsText(file);
+  const handleKeyDown = (event: KeyboardEvent<HTMLDivElement>) => {
+    if (event.key === "Enter" || event.key === " " || event.key === "Spacebar") {
+      event.preventDefault();
+      handleSelectFile();
+    }
+  };
+
+  const handleInputChange = (event: ChangeEvent<HTMLInputElement>) => {
+    const [file] = Array.from(event.currentTarget.files ?? []);
+    if (file) {
+      if (error) {
+        setError(null);
+      }
+      handleFileSelection(file);
+    }
+    event.currentTarget.value = "";
   };
 
   const borderClass = error ? "border-spam/70" : isDragging ? "border-info" : "border-info/40";
   const surfaceClass = isDragging ? "bg-surface" : "bg-surface/70";
+  const describedBy = `${helperTextId}${error ? ` ${errorTextId}` : ""}`;
 
   return (
     <section className="flex flex-col gap-3">
+      <input
+        ref={fileInputRef}
+        type="file"
+        accept=".eml,.txt,message/rfc822,text/plain"
+        tabIndex={-1}
+        onChange={handleInputChange}
+        className="sr-only"
+        aria-hidden="true"
+      />
       <div
-        className={`rounded-2xl border border-dashed ${borderClass} ${surfaceClass} p-6 text-center transition-colors`}
+        className={`cursor-pointer rounded-2xl border border-dashed ${borderClass} ${surfaceClass} p-6 text-center transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-info`}
         data-testid="file-drop-zone"
         onDragOver={handleDragOver}
         onDragLeave={handleDragLeave}
         onDrop={handleDrop}
+        onClick={handleSelectFile}
+        onKeyDown={handleKeyDown}
         tabIndex={0}
         role="button"
-        aria-label="Drop an EML or TXT file"
+        aria-label="Drop or select an EML or TXT file"
+        aria-describedby={describedBy}
+        aria-invalid={error ? "true" : undefined}
       >
         <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-full border border-info/30 bg-background/40">
           <FontAwesomeIcon icon={faArrowUpFromBracket} className="text-sm text-info" />
         </div>
         <p className="mt-4 text-sm text-text/80">
-          Drop an EML or TXT file to auto-populate the header field.
+          Drop or click to choose an EML or TXT file to auto-populate the header field.
         </p>
-        <p className="mt-2 font-mono text-xs text-text/50">Max size 1MB</p>
+        <p id={helperTextId} className="mt-2 font-mono text-xs text-text/50">
+          Max size 1MB
+        </p>
       </div>
       {error ? (
-        <p role="alert" className="text-xs text-spam">
+        <p role="alert" id={errorTextId} className="text-xs text-spam">
           {error}
         </p>
       ) : null}

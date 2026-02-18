@@ -129,7 +129,7 @@ export default function ReportContainer({ report }: { report: AnalysisReport }) 
       <section className="rounded-2xl border border-info/10 bg-background/40 p-4">
         <div className="flex items-center justify-between">
           <h3 className="text-sm font-semibold text-text/90">Summary Stats</h3>
-          <span className="text-[10px] uppercase tracking-[0.2em] text-text/40">Totals</span>
+          <span className="text-[10px] uppercase tracking-[0.2em] text-text/60">Totals</span>
         </div>
         <div className="mt-4 grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
           {summaryItems.map((item) => (

@@ -79,7 +79,7 @@ export default function HopChainVisualisation({ hopChain }: HopChainVisualisatio
               {index < hopChain.length - 1 ? (
                 <div
                   data-testid={`hop-chain-connector-${node.index}`}
-                  className="ml-5 flex items-center gap-3 py-2 text-text/40"
+                  className="ml-5 flex items-center gap-3 py-2 text-text/60"
                 >
                   <span className="h-8 w-px rounded-full bg-info/20" />
                   <FontAwesomeIcon icon={faArrowDown} className="text-xs" />

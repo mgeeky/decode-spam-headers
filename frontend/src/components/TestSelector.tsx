@@ -137,17 +137,17 @@ export default function TestSelector({ selectedTestIds, onSelectionChange }: Tes
       data-testid="test-selector"
     >
       <details open className="group">
-        <summary className="flex cursor-pointer list-none items-center justify-between text-xs uppercase tracking-[0.2em] text-info/90">
+        <summary className="flex cursor-pointer list-none items-center justify-between rounded-lg text-xs uppercase tracking-[0.2em] text-info/90 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-info">
           <span>Test Selection</span>
           <span className="flex items-center gap-2 font-mono text-[10px] text-text/50">
             {visibleCount} / {totalCount}
-            <FontAwesomeIcon icon={faChevronDown} className="text-[10px] text-text/40" />
+            <FontAwesomeIcon icon={faChevronDown} className="text-[10px] text-text/60" />
           </span>
         </summary>
         <div className="mt-4 flex flex-col gap-4">
           <div className="flex flex-wrap items-center gap-2">
-            <label className="flex flex-1 items-center gap-2 rounded-full border border-info/20 bg-background/40 px-3 py-2 text-sm text-text/70 focus-within:border-info/40">
-              <FontAwesomeIcon icon={faMagnifyingGlass} className="text-xs text-text/40" />
+            <label className="flex flex-1 items-center gap-2 rounded-full border border-info/20 bg-background/40 px-3 py-2 text-sm text-text/70 focus-within:border-info/40 focus-within:outline focus-within:outline-2 focus-within:outline-offset-2 focus-within:outline-info">
+              <FontAwesomeIcon icon={faMagnifyingGlass} className="text-xs text-text/60" />
               <input
                 type="text"
                 value={searchText}

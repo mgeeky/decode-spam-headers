@@ -135,7 +135,7 @@ export default function ProgressIndicator({
         </div>
         <div className="flex items-center gap-4 text-xs text-text/60">
           <span data-testid="progress-elapsed">{formatSeconds(elapsedSeconds)}</span>
-          <span className="text-text/30">/</span>
+          <span className="text-text/60">/</span>
           <span data-testid="progress-remaining">{formatSeconds(remainingSeconds)}</span>
         </div>
       </div>

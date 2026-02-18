@@ -34,6 +34,7 @@ export default function CaptchaChallenge({
   const [error, setError] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const titleId = useId();
+  const descriptionId = useId();
   const inputRef = useRef<HTMLInputElement | null>(null);
   const answerRef = useRef("");
   const modalRef = useRef<HTMLDivElement | null>(null);
@@ -151,6 +152,7 @@ export default function CaptchaChallenge({
         role="dialog"
         aria-modal="true"
         aria-labelledby={titleId}
+        aria-describedby={descriptionId}
         data-testid="captcha-challenge"
         onKeyDown={handleKeyDown}
         tabIndex={-1}
@@ -165,7 +167,9 @@ export default function CaptchaChallenge({
               <h2 id={titleId} className="text-sm font-semibold text-text">
                 Security Check Required
               </h2>
-              <p className="text-xs text-text/60">Solve the CAPTCHA to continue analysis.</p>
+              <p id={descriptionId} className="text-xs text-text/60">
+                Solve the CAPTCHA to continue analysis.
+              </p>
             </div>
           </div>
           <button
@@ -206,7 +210,7 @@ export default function CaptchaChallenge({
           </label>
 
           {error ? (
-            <p className="text-xs text-spam" data-testid="captcha-error">
+            <p role="alert" className="text-xs text-spam" data-testid="captcha-error">
               {error}
             </p>
           ) : null}

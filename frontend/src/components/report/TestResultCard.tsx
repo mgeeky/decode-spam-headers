@@ -135,7 +135,7 @@ export default function TestResultCard({ result, highlightQuery = "" }: TestResu
         <div className="overflow-hidden">
           <div className="rounded-xl border border-info/10 bg-background/40 p-3">
             <div className="flex flex-col gap-1">
-              <span className="text-[10px] uppercase tracking-[0.2em] text-text/40">Header</span>
+              <span className="text-[10px] uppercase tracking-[0.2em] text-text/60">Header</span>
               <span className="text-xs text-text/60">
                 {highlightText(result.headerName, highlightQuery)}
               </span>
