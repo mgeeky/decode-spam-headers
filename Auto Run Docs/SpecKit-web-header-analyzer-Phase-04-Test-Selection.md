@@ -33,7 +33,7 @@ This phase implements the test selection panel and analysis configuration contro
 - [x] All vitest tests pass: `npx vitest run src/__tests__/TestSelector.test.tsx src/__tests__/AnalysisControls.test.tsx`
 - [x] Test selector renders all 106+ tests with checkboxes
 - [x] Select All / Deselect All buttons work correctly
-- [ ] Search/filter narrows visible tests by name
+- [x] Search/filter narrows visible tests by name
 - [ ] DNS resolution toggle defaults to off
 - [ ] Decode-all toggle is functional
 - [ ] All controls are keyboard accessible (Tab, Enter, Space)
