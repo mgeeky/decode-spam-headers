@@ -4,22 +4,29 @@ import { createRoot } from "react-dom/client";
 import { afterEach, describe, expect, it, vi } from "vitest";
 
 import Home from "../app/page";
+import type { AnalysisProgress, AnalysisReport } from "../types/analysis";
 
-const { submitSpy, cancelSpy } = vi.hoisted(() => ({
-  submitSpy: vi.fn().mockResolvedValue(undefined),
-  cancelSpy: vi.fn(),
-}));
+const { submitSpy, cancelSpy, useAnalysisState } = vi.hoisted(() => {
+  const submitSpy = vi.fn().mockResolvedValue(undefined);
+  const cancelSpy = vi.fn();
+
+  return {
+    submitSpy,
+    cancelSpy,
+    useAnalysisState: {
+      status: "idle",
+      progress: null,
+      result: null,
+      error: null,
+      submit: submitSpy,
+      cancel: cancelSpy,
+    },
+  };
+});
 
 vi.mock("../hooks/useAnalysis", () => ({
   __esModule: true,
-  default: () => ({
-    status: "idle",
-    progress: null,
-    result: null,
-    error: null,
-    submit: submitSpy,
-    cancel: cancelSpy,
-  }),
+  default: () => useAnalysisState,
 }));
 
 type RenderResult = {
@@ -66,6 +73,21 @@ const getAnalyseButton = (container: HTMLElement): HTMLButtonElement => {
   return button as HTMLButtonElement;
 };
 
+const baseProgress: AnalysisProgress = {
+  currentIndex: 2,
+  totalTests: 4,
+  currentTest: "SpamAssassin Rule Hits",
+  elapsedMs: 29000,
+  percentage: 78,
+};
+
+const resetUseAnalysisState = (): void => {
+  useAnalysisState.status = "idle";
+  useAnalysisState.progress = null;
+  useAnalysisState.result = null;
+  useAnalysisState.error = null;
+};
+
 afterEach(() => {
   while (cleanups.length > 0) {
     const cleanup = cleanups.pop();
@@ -75,6 +97,7 @@ afterEach(() => {
   }
   submitSpy.mockClear();
   cancelSpy.mockClear();
+  resetUseAnalysisState();
 });
 
 describe("Home page", () => {
@@ -97,5 +120,36 @@ describe("Home page", () => {
       headers: "Received: from mail.example.com",
       config: { testIds: [], resolve: false, decodeAll: false },
     });
+  });
+
+  it("shows timeout notification with incomplete tests and partial results", () => {
+    const timeoutReport: AnalysisReport = {
+      results: [],
+      hopChain: [],
+      securityAppliances: [],
+      metadata: {
+        totalTests: 4,
+        passedTests: 1,
+        failedTests: 0,
+        skippedTests: 0,
+        elapsedMs: 30000,
+        timedOut: true,
+        incompleteTests: ["Mimecast Fingerprint", "Proofpoint TAP"],
+      },
+    };
+
+    useAnalysisState.status = "timeout";
+    useAnalysisState.progress = baseProgress;
+    useAnalysisState.result = timeoutReport;
+
+    const { container } = render(<Home />);
+    const alert = container.querySelector('[role="alert"]');
+    expect(alert).not.toBeNull();
+    const timeoutTests = container.querySelector('[data-testid="timeout-tests"]');
+    expect(timeoutTests?.textContent ?? "").toMatch(/Mimecast Fingerprint/);
+    expect(timeoutTests?.textContent ?? "").toMatch(/Proofpoint TAP/);
+
+    const results = container.querySelector('[data-testid="analysis-results"]');
+    expect(results).not.toBeNull();
   });
 });

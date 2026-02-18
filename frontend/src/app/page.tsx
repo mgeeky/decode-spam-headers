@@ -24,7 +24,8 @@ export default function Home() {
   const isOversized = headerInput.length > MAX_HEADER_INPUT_BYTES;
   const canAnalyse = hasHeaderInput && !isOversized;
   const isLoading = status === "submitting" || status === "analysing";
-  const showProgress = status === "analysing";
+  const showProgress = status === "analysing" || status === "timeout";
+  const incompleteTests = result?.metadata.incompleteTests ?? [];
 
   const handleAnalyse = useCallback(() => {
     if (!canAnalyse) {
@@ -86,6 +87,7 @@ export default function Home() {
                   status={status}
                   progress={progress}
                   timeoutSeconds={30}
+                  incompleteTests={incompleteTests}
                 />
               ) : null}
             </div>
