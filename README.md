@@ -17,6 +17,77 @@ Resulting output will contain useful information on why this e-mail might have b
 
 In order to embellish your Phishing HTML code before sending it to your client, you might also want feed it into my [`phishing-HTML-linter.py`](https://github.com/mgeeky/Penetration-Testing-Tools/blob/master/phishing/phishing-HTML-linter.py). It does pretty decent job finding _bad smells_ in your HTML that will get your e-mail with increased Spam-score.
 
+## Web Interface
+
+The web UI provides an interactive workflow for pasting headers or dropping EML files, configuring checks, running the analysis with live progress, and exporting a report.
+
+### Local Development
+
+1. Start the backend API:
+
+```
+uvicorn backend.app.main:app --reload --host 0.0.0.0 --port 8000
+```
+
+2. Start the frontend:
+
+```
+cd frontend
+npm install
+npm run dev
+```
+
+3. Open `http://localhost:3000` in your browser.
+
+### Environment Variables
+
+Backend configuration (defaults shown):
+
+| Variable | Default | Description |
+| --- | --- | --- |
+| `WHA_CORS_ORIGINS` | `http://localhost:3000` | Allowed CORS origins (comma-separated or JSON array). |
+| `WHA_RATE_LIMIT_REQUESTS` | `60` | Max requests per rate-limit window. |
+| `WHA_RATE_LIMIT_WINDOW_SECONDS` | `60` | Rate-limit window duration in seconds. |
+| `WHA_CAPTCHA_SECRET` | random | Secret used to sign CAPTCHA bypass tokens. |
+| `WHA_CAPTCHA_CHALLENGE_TTL_SECONDS` | `300` | CAPTCHA challenge TTL in seconds. |
+| `WHA_CAPTCHA_BYPASS_TTL_SECONDS` | `300` | CAPTCHA bypass token TTL in seconds. |
+| `WHA_ANALYSIS_TIMEOUT_SECONDS` | `30` | Hard timeout for a single analysis in seconds. |
+| `WHA_DEBUG` | `false` | Enable debug mode. |
+| `WHA_VERSION` | unset | Overrides the version reported by `/api/health`. |
+
+Frontend configuration:
+
+| Variable | Default | Description |
+| --- | --- | --- |
+| `NEXT_PUBLIC_API_BASE_URL` | `http://localhost:8000` | Base URL for the backend API. |
+
+### Tests
+
+Backend tests:
+
+```
+pytest backend/tests/
+```
+
+Frontend unit tests and coverage:
+
+```
+cd frontend
+npx vitest run --coverage
+```
+
+Frontend E2E tests:
+
+```
+cd frontend
+npx playwright test
+```
+
+### Screenshots (Web UI)
+
+- `TODO: Add header input + controls view`
+- `TODO: Add analysis progress + report view`
+
 
 ### Example Screenshots
 
