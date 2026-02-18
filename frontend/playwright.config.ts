@@ -73,14 +73,17 @@ export default defineConfig({
   /* Run your local dev server before starting the tests */
   webServer: [
     {
-      command: 'python -m uvicorn backend.app.main:app --port 8000',
+      command: 'python -m uvicorn app.main:app --app-dir backend --port 8000',
       url: 'http://localhost:8000',
       reuseExistingServer: !process.env.CI,
       cwd: '..',
+      env: {
+        WHA_CORS_ORIGINS: '["http://localhost:3100"]',
+      },
     },
     {
-      command: 'npm run dev -- --port 3000',
-      url: 'http://localhost:3000',
+      command: 'npm run dev -- --port 3100',
+      url: 'http://localhost:3100',
       reuseExistingServer: !process.env.CI,
     },
   ],
