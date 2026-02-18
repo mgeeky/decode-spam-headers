@@ -189,7 +189,7 @@ def _normalize_payload(payload: object) -> tuple[str, str, str, str] | None:
 
 
 def _combine_payloads(
-    payloads: list[tuple[str, str, str, str]]
+    payloads: list[tuple[str, str, str, str]],
 ) -> tuple[str, str, str, str]:
     headers: list[str] = []
     values: list[str] = []

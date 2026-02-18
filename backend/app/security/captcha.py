@@ -245,9 +245,7 @@ def _b64decode(data: str) -> bytes:
 def _prune_challenges_locked() -> None:
     now = time.time()
     expired = [
-        token
-        for token, record in _CHALLENGES.items()
-        if record.expires_at <= now
+        token for token, record in _CHALLENGES.items() if record.expires_at <= now
     ]
     for token in expired:
         _CHALLENGES.pop(token, None)

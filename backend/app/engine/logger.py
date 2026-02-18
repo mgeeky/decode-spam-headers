@@ -114,9 +114,7 @@ class Logger:
                 colored = colorizingFunc(c, txt)
 
                 if not colored:
-                    raise ValueError(
-                        f"Could not strip colors from phrase: ({patt})!"
-                    )
+                    raise ValueError(f"Could not strip colors from phrase: ({patt})!")
 
                 s = s.replace(patt, colored)
                 pos = 0

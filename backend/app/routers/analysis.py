@@ -79,9 +79,7 @@ async def analyse(request: Request) -> StreamingResponse:
         )
 
     if len(headers) > MAX_HEADERS_LENGTH:
-        return JSONResponse(
-            status_code=413, content={"error": "Headers exceed 1 MB"}
-        )
+        return JSONResponse(status_code=413, content={"error": "Headers exceed 1 MB"})
 
     headers = _sanitize_headers(headers)
     if not headers.strip():
@@ -120,9 +118,7 @@ async def analyse(request: Request) -> StreamingResponse:
         elapsed_ms = (perf_counter() - start) * 1000
         percentage = 0.0
         if total_tests > 0:
-            percentage = min(
-                100.0, (current_index + 1) / total_tests * 100.0
-            )
+            percentage = min(100.0, (current_index + 1) / total_tests * 100.0)
         payload = AnalysisProgress(
             current_index=current_index,
             total_tests=total_tests,
@@ -168,9 +164,7 @@ async def analyse(request: Request) -> StreamingResponse:
                     ),
                 )
 
-            await send_stream.send(
-                ("result", final_result.model_dump(by_alias=True))
-            )
+            await send_stream.send(("result", final_result.model_dump(by_alias=True)))
             await send_stream.send(("done", {}))
 
     async def event_stream() -> Any:

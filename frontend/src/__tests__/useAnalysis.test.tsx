@@ -105,8 +105,16 @@ const timeoutReport: AnalysisReport = {
 };
 
 const AnalysisHarness = ({ request, onStatusChange }: HarnessProps) => {
-  const { status, progress, result, error, submit, cancel, captchaChallenge, clearCaptchaChallenge } =
-    useAnalysis();
+  const {
+    status,
+    progress,
+    result,
+    error,
+    submit,
+    cancel,
+    captchaChallenge,
+    clearCaptchaChallenge,
+  } = useAnalysis();
 
   useEffect(() => {
     onStatusChange?.(status);

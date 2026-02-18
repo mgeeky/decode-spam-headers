@@ -105,8 +105,7 @@ export default function CaptchaChallenge({
         ),
       ).filter(
         (element) =>
-          !element.hasAttribute("disabled") &&
-          element.getAttribute("aria-hidden") !== "true",
+          !element.hasAttribute("disabled") && element.getAttribute("aria-hidden") !== "true",
       );
 
       if (focusableElements.length === 0) {

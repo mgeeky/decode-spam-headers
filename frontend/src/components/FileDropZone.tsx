@@ -167,7 +167,6 @@ export default function FileDropZone({ onFileContent }: FileDropZoneProps) {
         role="button"
         aria-label="Drop or select an EML or TXT file"
         aria-describedby={describedBy}
-        aria-invalid={error ? "true" : undefined}
       >
         <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-full border border-info/30 bg-background/40">
           <FontAwesomeIcon icon={faArrowUpFromBracket} className="text-sm text-info" />

@@ -48,4 +48,4 @@ def test_parser_preserves_content_type_boundary(sample_headers: str) -> None:
     headers = parser.parse(sample_headers)
 
     content_type = next(header for header in headers if header.name == "Content-Type")
-    assert "boundary=\"boundary-123\"" in content_type.value
+    assert 'boundary="boundary-123"' in content_type.value

@@ -68,9 +68,7 @@ class Settings(BaseSettings):
                     parsed = json.loads(text)
                     if isinstance(parsed, list):
                         return [
-                            str(item).strip()
-                            for item in parsed
-                            if str(item).strip()
+                            str(item).strip() for item in parsed if str(item).strip()
                         ]
                 except json.JSONDecodeError:
                     pass
