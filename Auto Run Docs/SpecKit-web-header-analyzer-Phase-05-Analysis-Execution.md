@@ -40,7 +40,7 @@ Frontend uses `fetch` with `ReadableStream` reader (not native `EventSource`, wh
 ## Completion
 
 - [x] `pytest backend/tests/api/test_analysis_router.py` passes (all paths: happy, error, oversized, partial failure, timeout)
-- [ ] All vitest tests pass: `npx vitest run src/__tests__/ProgressIndicator.test.tsx src/__tests__/useAnalysis.test.ts`
+- [x] All vitest tests pass: `npx vitest run src/__tests__/ProgressIndicator.test.tsx src/__tests__/useAnalysis.test.ts`
 - [ ] Submitting headers triggers backend analysis with SSE streaming
 - [ ] Progress bar updates in real-time showing current test name and percentage
 - [ ] Countdown timer counts down from 30 seconds
