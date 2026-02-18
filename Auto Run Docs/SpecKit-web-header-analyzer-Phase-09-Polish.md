@@ -36,7 +36,7 @@ This phase performs final integration, accessibility audit, responsive testing, 
 - [x] `pytest backend/tests/` passes with ≥80% coverage on new modules. Notes: ran `pytest backend/tests/ --cov=backend/app --cov-report=term` (total backend/app coverage 82%).
 - [x] `npx vitest run --coverage` passes with ≥80% coverage on new components. Notes: ran in `frontend/` (overall coverage 83.48%); warnings emitted about `--localstorage-file` missing a valid path.
 - [x] `ruff check backend/` — zero errors. Notes: ran `ruff check backend/` (all checks passed).
-- [ ] `npx eslint src/` — zero errors
+- [x] `npx eslint src/` — zero errors. Notes: ran `npx eslint src/` in `frontend/` with no issues.
 - [ ] `npx prettier --check src/` — zero errors
 - [ ] No `any` types in TypeScript
 - [ ] WCAG 2.1 AA compliant (ARIA labels, keyboard nav, contrast ratios)
