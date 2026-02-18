@@ -37,7 +37,7 @@ This phase implements the test selection panel and analysis configuration contro
 - [x] DNS resolution toggle defaults to off
 - [x] Decode-all toggle is functional
 - [x] All controls are keyboard accessible (Tab, Enter, Space)
-- [ ] Linting passes (`ruff check backend/`, `npx eslint src/`)
+- [x] Linting passes (`ruff check backend/`, `npx eslint src/`)
 - [ ] Run `/speckit.analyze` to verify consistency
 
 Note: Verified Select All/Deselect All behavior via `TestSelector.test.tsx` ("selects and deselects all tests") on 2026-02-18.

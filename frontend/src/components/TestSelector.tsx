@@ -98,7 +98,7 @@ export default function TestSelector({ selectedTestIds, onSelectionChange }: Tes
     return () => {
       isActive = false;
     };
-  }, []);
+  }, [client]);
 
   const normalizedSearch = searchText.trim().toLowerCase();
   const filteredTests = useMemo(() => {
