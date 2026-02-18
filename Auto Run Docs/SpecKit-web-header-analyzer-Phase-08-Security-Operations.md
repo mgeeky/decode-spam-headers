@@ -42,7 +42,7 @@ This phase protects the analysis service from abuse with per-IP rate limiting an
 - [x] Exceeding rate limit returns HTTP 429 with Retry-After header and CAPTCHA challenge
 - [x] Solving CAPTCHA returns HMAC-signed bypass token (5-minute expiry)
 - [x] Bypass token exempts IP from rate limiting on subsequent requests
-- [ ] `GET /api/health` returns `{status, version, uptime, scannerCount}`
+- [x] `GET /api/health` returns `{status, version, uptime, scannerCount}`
 - [x] All routers and CORS middleware are registered in `main.py`
 - [ ] Application starts statelessly — no database, no session management
 - [ ] CAPTCHA modal is keyboard accessible (Tab, Enter, Escape to close)
