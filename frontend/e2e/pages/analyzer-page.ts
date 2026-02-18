@@ -2,12 +2,18 @@ import type { Download, Locator, Page } from "@playwright/test";
 import fs from "fs/promises";
 import path from "path";
 
-const resolveMimeType = (fileName: string): string => {
+const resolveMimeType = (fileName: string, override?: string): string => {
+  if (override) {
+    return override;
+  }
   const extension = path.extname(fileName).toLowerCase();
   if (extension === ".eml") {
     return "message/rfc822";
   }
-  return "text/plain";
+  if (extension === ".txt") {
+    return "text/plain";
+  }
+  return "application/octet-stream";
 };
 
 export class AnalyzerPage {
@@ -25,10 +31,10 @@ export class AnalyzerPage {
     await this.headerInput().fill(text);
   }
 
-  async dropFile(filePath: string): Promise<void> {
+  async dropFile(filePath: string, mimeTypeOverride?: string): Promise<void> {
     const resolvedPath = path.resolve(filePath);
     const fileName = path.basename(resolvedPath);
-    const mimeType = resolveMimeType(fileName);
+    const mimeType = resolveMimeType(fileName, mimeTypeOverride);
     const fileBuffer = await fs.readFile(resolvedPath);
     const base64 = fileBuffer.toString("base64");
 
