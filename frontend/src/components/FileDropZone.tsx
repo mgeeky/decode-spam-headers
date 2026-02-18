@@ -58,6 +58,28 @@ const getFirstFile = (transfer: DataTransfer | null): File | null => {
   return null;
 };
 
+const normalizeLineEndings = (value: string): string =>
+  value.replace(/\r\n/g, "\n").replace(/\r/g, "\n");
+
+const extractHeaderBlock = (content: string): string => {
+  const normalized = normalizeLineEndings(content);
+  const lines = normalized.split("\n");
+  const headerLines: string[] = [];
+
+  for (const line of lines) {
+    if (line.trim() === "") {
+      break;
+    }
+    headerLines.push(line);
+  }
+
+  if (headerLines.length === 0) {
+    return normalized.trim();
+  }
+
+  return headerLines.join("\n").trimEnd();
+};
+
 export default function FileDropZone({ onFileContent }: FileDropZoneProps) {
   const [isDragging, setIsDragging] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -80,7 +102,7 @@ export default function FileDropZone({ onFileContent }: FileDropZoneProps) {
     reader.onload = () => {
       const result = reader.result;
       const content = typeof result === "string" ? result : "";
-      onFileContent(content);
+      onFileContent(extractHeaderBlock(content));
     };
     reader.onerror = () => {
       setError("Unable to read the dropped file.");

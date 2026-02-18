@@ -97,7 +97,9 @@ describe("FileDropZone", () => {
 
   it("reads dropped EML/TXT file content", () => {
     const handleContent = vi.fn();
-    const restore = mockFileReader("Header from file");
+    const restore = mockFileReader(
+      "From: sender@example.com\r\nSubject: Hello\r\n\r\nBody: should be ignored",
+    );
     const { container } = render(<FileDropZone onFileContent={handleContent} />);
     const dropZone = getDropZone(container);
     const file = new File(["Header from file"], "sample.eml", { type: "message/rfc822" });
@@ -108,7 +110,7 @@ describe("FileDropZone", () => {
 
     restore();
 
-    expect(handleContent).toHaveBeenCalledWith("Header from file");
+    expect(handleContent).toHaveBeenCalledWith("From: sender@example.com\nSubject: Hello");
   });
 
   it("rejects unsupported file types with feedback", () => {

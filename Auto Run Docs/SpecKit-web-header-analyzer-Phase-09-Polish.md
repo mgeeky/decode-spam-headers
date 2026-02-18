@@ -30,7 +30,7 @@ This phase performs final integration, accessibility audit, responsive testing, 
 ## Completion
 
 - [x] Complete flow works end-to-end: paste headers → configure tests → analyse → view report → export. Notes: replaced Playwright example spec with end-to-end flow test (paste + configure + analyse + report + export), adjusted Playwright webServer ports/CORS for local 3100 runs, ran `npx playwright test e2e/example.spec.ts --project=chromium`.
-- [ ] File drop flow works: drop EML → auto-populate → analyse → report
+- [x] File drop flow works: drop EML → auto-populate → analyse → report. Notes: extract header block from dropped EML before populating input; updated FileDropZone tests and ran `npx vitest run src/__tests__/FileDropZone.test.tsx`.
 - [ ] Cache flow works: analyse → reload → see cached results → clear cache
 - [ ] Rate limiting flow works: exceed limit → CAPTCHA modal → solve → retry succeeds
 - [ ] `pytest backend/tests/` passes with ≥80% coverage on new modules
