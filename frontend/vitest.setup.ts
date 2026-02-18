@@ -1,5 +1,5 @@
 const createLocalStorageMock = () => {
-  let store = new Map<string, string>();
+  const store = new Map<string, string>();
 
   return {
     get length() {

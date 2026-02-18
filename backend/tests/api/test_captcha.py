@@ -63,7 +63,10 @@ async def test_captcha_verify_returns_bypass_token() -> None:
     ) as client:
         response = await client.post(
             "/api/captcha/verify",
-            json={"challengeToken": challenge.challenge_token, "answer": challenge.answer},
+            json={
+                "challengeToken": challenge.challenge_token,
+                "answer": challenge.answer,
+            },
             headers={"x-forwarded-for": client_ip},
         )
 

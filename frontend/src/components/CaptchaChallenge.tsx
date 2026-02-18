@@ -189,6 +189,7 @@ export default function CaptchaChallenge({
 
         <div className="mt-5 flex flex-col gap-4">
           <div className="rounded-xl border border-info/20 bg-background/50 p-4">
+            {/* eslint-disable-next-line @next/next/no-img-element */}
             <img
               src={`data:image/png;base64,${challenge.imageBase64}`}
               alt="CAPTCHA challenge"
