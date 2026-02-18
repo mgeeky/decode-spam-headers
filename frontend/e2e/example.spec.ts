@@ -59,3 +59,28 @@ test("complete analysis flow from paste to export", async ({ page }) => {
   const htmlContents = await fs.readFile(htmlPath, "utf8");
   expect(htmlContents).toContain("<title>Email Header Analysis Report</title>");
 });
+
+test("cache flow persists report across reloads and clears on demand", async ({ page }) => {
+  const headers = await fs.readFile(headersPath, "utf8");
+
+  await page.goto("http://localhost:3100");
+
+  const headerInput = page.getByRole("textbox", { name: "Header Input" });
+  await headerInput.fill(headers);
+
+  await page.getByRole("button", { name: "Analyse Headers" }).click();
+
+  const reportContainer = page.getByTestId("report-container");
+  await reportContainer.waitFor({ state: "visible", timeout: 30000 });
+
+  await page.reload();
+
+  await expect(page.getByTestId("report-container")).toBeVisible();
+  await expect(page.getByText("Cached Result")).toBeVisible();
+
+  const clearCacheButton = page.getByRole("button", { name: "Clear Cache" });
+  await clearCacheButton.click();
+
+  await expect(page.getByTestId("report-container")).toHaveCount(0);
+  await expect(headerInput).toHaveValue("");
+});
