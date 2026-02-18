@@ -40,7 +40,7 @@ This phase performs final integration, accessibility audit, responsive testing, 
 - [x] `npx prettier --check src/` — zero errors. Notes: ran `npx prettier --check src/` in `frontend/` (all matched files formatted).
 - [x] No `any` types in TypeScript
 - [x] WCAG 2.1 AA compliant (ARIA labels, keyboard nav, contrast ratios). Notes: reviewed interactive components for ARIA labels/roles, keyboard activation handlers, and focus-visible styles; contrast tokens align with >=60% text opacity and highlighted error states.
-- [ ] Responsive at 320px, 768px, 1024px, 1440px, 2560px — no layout issues
+- [x] Responsive at 320px, 768px, 1024px, 1440px, 2560px — no layout issues. Notes: added Playwright breakpoint overflow checks in `frontend/e2e/responsive.spec.ts`, set `min-w-0` on page columns and test selector groups to stop 320px overflow; ran `npx playwright test e2e/responsive.spec.ts --project=chromium`.
 - [ ] Lighthouse score ≥90 on Slow 4G preset
 - [ ] Analysis completes within 10s for sample headers
 - [ ] README.md updated with web interface documentation

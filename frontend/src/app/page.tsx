@@ -159,12 +159,12 @@ export default function Home() {
           </header>
 
           <section className="grid gap-6 lg:grid-cols-[2fr_1fr]">
-            <div className="flex flex-col gap-6">
+            <div className="flex min-w-0 flex-col gap-6">
               <HeaderInput value={headerInput} onChange={setHeaderInput} />
               <AnalysisControls config={analysisConfig} onChange={setAnalysisConfig} />
             </div>
 
-            <div className="flex flex-col gap-6">
+            <div className="flex min-w-0 flex-col gap-6">
               <FileDropZone onFileContent={setHeaderInput} />
 
               <div className="rounded-2xl border border-info/10 bg-surface p-6">

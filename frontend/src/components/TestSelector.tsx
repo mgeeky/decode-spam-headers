@@ -187,15 +187,15 @@ export default function TestSelector({ selectedTestIds, onSelectionChange }: Tes
             </p>
           ) : null}
 
-          <div className="grid gap-4">
+          <div className="grid min-w-0 gap-4">
             {groupedTests.map((group) => (
               <div
                 key={group.category}
-                className="rounded-xl border border-info/10 bg-background/40 p-4"
+                className="w-full min-w-0 rounded-xl border border-info/10 bg-background/40 p-4"
               >
-                <div className="flex items-center justify-between text-xs uppercase tracking-[0.2em] text-info/80">
-                  <span>{group.category}</span>
-                  <span className="font-mono text-[10px] text-text/50">
+                <div className="flex flex-wrap items-center justify-between gap-2 text-xs uppercase tracking-[0.2em] text-info/80">
+                  <span className="min-w-0 break-words">{group.category}</span>
+                  <span className="min-w-0 font-mono text-[10px] text-text/50">
                     {group.tests.length} tests
                   </span>
                 </div>
@@ -203,7 +203,7 @@ export default function TestSelector({ selectedTestIds, onSelectionChange }: Tes
                   {group.tests.map((test) => (
                     <label
                       key={test.id}
-                      className="flex items-start gap-3 rounded-lg border border-info/10 bg-surface/40 p-3 text-sm text-text/80"
+                      className="flex min-w-0 items-start gap-3 rounded-lg border border-info/10 bg-surface/40 p-3 text-sm text-text/80"
                     >
                       <input
                         type="checkbox"
@@ -213,8 +213,8 @@ export default function TestSelector({ selectedTestIds, onSelectionChange }: Tes
                         data-testid={`test-checkbox-${test.id}`}
                         aria-label={test.name}
                       />
-                      <span className="flex flex-col gap-1">
-                        <span className="font-medium">{test.name}</span>
+                      <span className="min-w-0 flex flex-col gap-1">
+                        <span className="break-words font-medium">{test.name}</span>
                         <span className="font-mono text-[10px] text-text/50">ID {test.id}</span>
                       </span>
                     </label>
