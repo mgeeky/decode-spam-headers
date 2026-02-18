@@ -24,13 +24,13 @@ This phase implements the test selection panel and analysis configuration contro
 - [x] T021 [US2] Create `backend/app/schemas/tests.py` (response schema) and `backend/app/routers/tests.py` — FastAPI router with `GET /api/tests` returning all available tests (id, name, category) from scanner registry. Register router in `backend/app/main.py`. Verify `test_tests_router.py` passes (TDD Green)
 - [x] T022 [US2] Write failing tests (TDD Red) in `frontend/src/__tests__/TestSelector.test.tsx` (render with mocked list, select/deselect all, search filtering) and `frontend/src/__tests__/AnalysisControls.test.tsx` (render, toggle states, keyboard accessibility)
 - [x] T023 [P] [US2] Create `frontend/src/components/TestSelector.tsx` — dropdown with checkboxes per test, fetches list from `GET /api/tests`, "Select All"/"Deselect All" buttons (FR-04), text search/filter (FR-23), grouped by vendor/category (FR-24), FontAwesome icons. Verify `TestSelector.test.tsx` passes (TDD Green)
-- [ ] T024 [P] [US2] Create `frontend/src/components/AnalysisControls.tsx` — panel containing TestSelector, DNS resolution toggle (off by default, FR-18), decode-all toggle (FR-19), FontAwesome toggle icons, keyboard accessible (NFR-02). Verify `AnalysisControls.test.tsx` passes (TDD Green)
+- [x] T024 [P] [US2] Create `frontend/src/components/AnalysisControls.tsx` — panel containing TestSelector, DNS resolution toggle (off by default, FR-18), decode-all toggle (FR-19), FontAwesome toggle icons, keyboard accessible (NFR-02). Verify `AnalysisControls.test.tsx` passes (TDD Green)
 
 ## Completion
 
 - [ ] `pytest backend/tests/api/test_tests_router.py` passes
 - [ ] `GET /api/tests` returns all 106+ tests with id, name, and category
-- [ ] All vitest tests pass: `npx vitest run src/__tests__/TestSelector.test.tsx src/__tests__/AnalysisControls.test.tsx`
+- [x] All vitest tests pass: `npx vitest run src/__tests__/TestSelector.test.tsx src/__tests__/AnalysisControls.test.tsx`
 - [ ] Test selector renders all 106+ tests with checkboxes
 - [ ] Select All / Deselect All buttons work correctly
 - [ ] Search/filter narrows visible tests by name
