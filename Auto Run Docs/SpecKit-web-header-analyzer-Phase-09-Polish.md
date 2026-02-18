@@ -43,5 +43,5 @@ This phase performs final integration, accessibility audit, responsive testing, 
 - [x] Responsive at 320px, 768px, 1024px, 1440px, 2560px — no layout issues. Notes: added Playwright breakpoint overflow checks in `frontend/e2e/responsive.spec.ts`, set `min-w-0` on page columns and test selector groups to stop 320px overflow; ran `npx playwright test e2e/responsive.spec.ts --project=chromium`.
 - [x] Lighthouse score ≥90 on Slow 4G preset. Notes: ran `next build` and `next start` with `PORT=3100` + `NODE_ENV=production`, then `npx lighthouse http://localhost:3100 --preset=perf --form-factor=mobile --throttling-method=simulate` using Playwright Chromium (CHROME_PATH). Score 91; FCP 0.76s, LCP 2.48s, TTI 2.56s. Report: `Auto Run Docs/Working/lighthouse-report.json`.
 - [x] Analysis completes within 10s for sample headers. Notes: ran analyzer on `backend/tests/fixtures/sample_headers.txt` (0.35s, 106 tests) with `PYTHONPATH=backend`.
-- [ ] README.md updated with web interface documentation
+- [x] README.md updated with web interface documentation
 - [ ] Run `/speckit.analyze` to verify consistency
