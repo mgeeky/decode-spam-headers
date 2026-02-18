@@ -41,7 +41,7 @@ This phase performs final integration, accessibility audit, responsive testing, 
 - [x] No `any` types in TypeScript
 - [x] WCAG 2.1 AA compliant (ARIA labels, keyboard nav, contrast ratios). Notes: reviewed interactive components for ARIA labels/roles, keyboard activation handlers, and focus-visible styles; contrast tokens align with >=60% text opacity and highlighted error states.
 - [x] Responsive at 320px, 768px, 1024px, 1440px, 2560px — no layout issues. Notes: added Playwright breakpoint overflow checks in `frontend/e2e/responsive.spec.ts`, set `min-w-0` on page columns and test selector groups to stop 320px overflow; ran `npx playwright test e2e/responsive.spec.ts --project=chromium`.
-- [ ] Lighthouse score ≥90 on Slow 4G preset
+- [x] Lighthouse score ≥90 on Slow 4G preset. Notes: ran `next build` and `next start` with `PORT=3100` + `NODE_ENV=production`, then `npx lighthouse http://localhost:3100 --preset=perf --form-factor=mobile --throttling-method=simulate` using Playwright Chromium (CHROME_PATH). Score 91; FCP 0.76s, LCP 2.48s, TTI 2.56s. Report: `Auto Run Docs/Working/lighthouse-report.json`.
 - [ ] Analysis completes within 10s for sample headers
 - [ ] README.md updated with web interface documentation
 - [ ] Run `/speckit.analyze` to verify consistency
