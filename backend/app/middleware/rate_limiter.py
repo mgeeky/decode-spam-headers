@@ -2,7 +2,6 @@ from __future__ import annotations
 
 import asyncio
 import math
-import secrets
 import time
 from collections import deque
 from dataclasses import dataclass
@@ -11,8 +10,10 @@ from typing import Deque
 from fastapi import status
 from fastapi.responses import JSONResponse
 
-CAPTCHA_PLACEHOLDER_IMAGE_BASE64 = (
-    "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO6sZcQAAAAASUVORK5CYII="
+from app.security.captcha import (
+    BYPASS_TOKEN_HEADER,
+    create_captcha_challenge,
+    verify_bypass_token,
 )
 
 
@@ -83,6 +84,10 @@ class RateLimiterMiddleware:
             return
 
         client_ip = _get_client_ip(scope)
+        bypass_token = _get_bypass_token(scope)
+        if bypass_token and verify_bypass_token(bypass_token, client_ip):
+            await self.app(scope, receive, send)
+            return
         allowed, retry_after = await self.limiter.check(client_ip)
         if allowed:
             await self.app(scope, receive, send)
@@ -105,9 +110,10 @@ class RateLimiterMiddleware:
 
 
 def _create_captcha_challenge() -> CaptchaChallengePayload:
+    challenge = create_captcha_challenge()
     return CaptchaChallengePayload(
-        challenge_token=secrets.token_urlsafe(16),
-        image_base64=CAPTCHA_PLACEHOLDER_IMAGE_BASE64,
+        challenge_token=challenge.challenge_token,
+        image_base64=challenge.image_base64,
     )
 
 
@@ -125,3 +131,12 @@ def _get_client_ip(scope) -> str:
     if client and client[0]:
         return str(client[0])
     return "unknown"
+
+
+def _get_bypass_token(scope) -> str | None:
+    headers = scope.get("headers") or []
+    token_header = BYPASS_TOKEN_HEADER.encode("utf-8")
+    for key, value in headers:
+        if key.lower() == token_header:
+            return value.decode("utf-8", errors="ignore")
+    return None

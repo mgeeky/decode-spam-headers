@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import json
+import secrets
 from functools import lru_cache
 from typing import Any
 
@@ -29,6 +30,20 @@ class Settings(BaseSettings):
         default=60,
         ge=1,
         description="Rate limit window in seconds.",
+    )
+    captcha_secret: str = Field(
+        default_factory=lambda: secrets.token_urlsafe(32),
+        description="Secret used to sign CAPTCHA bypass tokens.",
+    )
+    captcha_challenge_ttl_seconds: int = Field(
+        default=300,
+        ge=60,
+        description="Seconds until CAPTCHA challenges expire.",
+    )
+    captcha_bypass_ttl_seconds: int = Field(
+        default=300,
+        ge=60,
+        description="Seconds until CAPTCHA bypass tokens expire.",
     )
     analysis_timeout_seconds: int = Field(
         default=30,
