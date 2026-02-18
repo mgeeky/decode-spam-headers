@@ -63,9 +63,7 @@ afterEach(() => {
 
 describe("SecurityAppliancesSummary", () => {
   it("renders detected security appliances as badges", () => {
-    const { container } = render(
-      <SecurityAppliancesSummary appliances={sampleAppliances} />,
-    );
+    const { container } = render(<SecurityAppliancesSummary appliances={sampleAppliances} />);
 
     const summary = getByTestId(container, "security-appliances-summary");
     expect(summary.textContent ?? "").toContain("Mimecast Email Security");

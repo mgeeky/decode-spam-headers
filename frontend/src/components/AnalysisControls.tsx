@@ -2,12 +2,7 @@
 
 import { useState, type KeyboardEvent } from "react";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import {
-  faToggleOff,
-  faToggleOn,
-  faGlobe,
-  faCode,
-} from "@fortawesome/free-solid-svg-icons";
+import { faToggleOff, faToggleOn, faGlobe, faCode } from "@fortawesome/free-solid-svg-icons";
 
 import type { AnalysisConfig } from "../types/analysis";
 import TestSelector from "./TestSelector";
@@ -33,10 +28,7 @@ const handleToggleKeyDown = (
   }
 };
 
-export default function AnalysisControls({
-  config,
-  onChange,
-}: AnalysisControlsProps) {
+export default function AnalysisControls({ config, onChange }: AnalysisControlsProps) {
   const [internalConfig, setInternalConfig] = useState<AnalysisConfig>(defaultConfig);
   const resolvedConfig = config ?? internalConfig;
 

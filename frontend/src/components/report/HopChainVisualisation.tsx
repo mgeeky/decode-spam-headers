@@ -1,12 +1,7 @@
 "use client";
 
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import {
-  faArrowDown,
-  faClock,
-  faNetworkWired,
-  faServer,
-} from "@fortawesome/free-solid-svg-icons";
+import { faArrowDown, faClock, faNetworkWired, faServer } from "@fortawesome/free-solid-svg-icons";
 
 import type { HopChainNode } from "../../types/analysis";
 
@@ -21,9 +16,7 @@ const formatDelay = (delay?: number | null): string | null => {
   return `${delay.toFixed(2)}s`;
 };
 
-export default function HopChainVisualisation({
-  hopChain,
-}: HopChainVisualisationProps) {
+export default function HopChainVisualisation({ hopChain }: HopChainVisualisationProps) {
   if (hopChain.length === 0) {
     return (
       <section
@@ -56,13 +49,9 @@ export default function HopChainVisualisation({
                   </span>
                   <div className="flex-1">
                     <div className="flex flex-wrap items-baseline gap-2">
-                      <span className="text-sm font-semibold text-text/90">
-                        {node.hostname}
-                      </span>
+                      <span className="text-sm font-semibold text-text/90">{node.hostname}</span>
                       {node.ip ? (
-                        <span className="font-mono text-xs text-text/60">
-                          {node.ip}
-                        </span>
+                        <span className="font-mono text-xs text-text/60">{node.ip}</span>
                       ) : null}
                     </div>
                     <div className="mt-2 flex flex-wrap gap-4 text-xs text-text/60">
@@ -74,10 +63,7 @@ export default function HopChainVisualisation({
                       ) : null}
                       {node.serverInfo ? (
                         <span className="flex items-center gap-2">
-                          <FontAwesomeIcon
-                            icon={faNetworkWired}
-                            className="text-[10px]"
-                          />
+                          <FontAwesomeIcon icon={faNetworkWired} className="text-[10px]" />
                           {node.serverInfo}
                         </span>
                       ) : null}

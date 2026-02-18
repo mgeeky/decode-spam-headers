@@ -9,9 +9,7 @@ type SecurityAppliancesSummaryProps = {
   appliances: SecurityAppliance[];
 };
 
-export default function SecurityAppliancesSummary({
-  appliances,
-}: SecurityAppliancesSummaryProps) {
+export default function SecurityAppliancesSummary({ appliances }: SecurityAppliancesSummaryProps) {
   const hasAppliances = appliances.length > 0;
 
   return (
@@ -46,10 +44,7 @@ export default function SecurityAppliancesSummary({
           ))}
         </div>
       ) : (
-        <p
-          data-testid="security-appliances-empty"
-          className="mt-4 text-sm text-text/60"
-        >
+        <p data-testid="security-appliances-empty" className="mt-4 text-sm text-text/60">
           No security appliances detected.
         </p>
       )}

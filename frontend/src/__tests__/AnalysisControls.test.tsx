@@ -105,9 +105,7 @@ describe("AnalysisControls", () => {
 
     getTestSelector(container);
     expect(getToggle(container, "toggle-resolve").getAttribute("aria-checked")).toBe("false");
-    expect(getToggle(container, "toggle-decode-all").getAttribute("aria-checked")).toBe(
-      "false",
-    );
+    expect(getToggle(container, "toggle-decode-all").getAttribute("aria-checked")).toBe("false");
   });
 
   it("updates toggles without a controlled config", async () => {
@@ -126,9 +124,7 @@ describe("AnalysisControls", () => {
     });
 
     expect(decodeToggle.getAttribute("aria-checked")).toBe("true");
-    expect(handleChange).toHaveBeenLastCalledWith(
-      expect.objectContaining({ decodeAll: true }),
-    );
+    expect(handleChange).toHaveBeenLastCalledWith(expect.objectContaining({ decodeAll: true }));
   });
 
   it("updates toggles on click and keyboard", async () => {
@@ -168,9 +164,7 @@ describe("AnalysisControls", () => {
 
     const decodeToggle = getToggle(container, "toggle-decode-all");
     act(() => {
-      decodeToggle.dispatchEvent(
-        new KeyboardEvent("keydown", { key: "Enter", bubbles: true }),
-      );
+      decodeToggle.dispatchEvent(new KeyboardEvent("keydown", { key: "Enter", bubbles: true }));
     });
 
     expect(decodeToggle.getAttribute("aria-checked")).toBe("true");
@@ -206,14 +200,10 @@ describe("AnalysisControls", () => {
 
     const resolveToggle = getToggle(container, "toggle-resolve");
     act(() => {
-      resolveToggle.dispatchEvent(
-        new KeyboardEvent("keydown", { key: " ", bubbles: true }),
-      );
+      resolveToggle.dispatchEvent(new KeyboardEvent("keydown", { key: " ", bubbles: true }));
     });
 
     expect(resolveToggle.getAttribute("aria-checked")).toBe("true");
-    expect(handleChange).toHaveBeenLastCalledWith(
-      expect.objectContaining({ resolve: true }),
-    );
+    expect(handleChange).toHaveBeenLastCalledWith(expect.objectContaining({ resolve: true }));
   });
 });

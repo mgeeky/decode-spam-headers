@@ -86,7 +86,7 @@ const buildHtmlReport = (report: AnalysisReport): string => {
 
   const renderHopChain = (): string => {
     if (report.hopChain.length === 0) {
-      return "<p class=\"muted\">No hop chain data available.</p>";
+      return '<p class="muted">No hop chain data available.</p>';
     }
 
     const items = report.hopChain
@@ -108,7 +108,7 @@ const buildHtmlReport = (report: AnalysisReport): string => {
 
   const renderSecurityAppliances = (): string => {
     if (report.securityAppliances.length === 0) {
-      return "<p class=\"muted\">No security appliances detected.</p>";
+      return '<p class="muted">No security appliances detected.</p>';
     }
 
     const items = report.securityAppliances

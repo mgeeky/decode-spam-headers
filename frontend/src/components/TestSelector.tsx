@@ -180,9 +180,7 @@ export default function TestSelector({ selectedTestIds, onSelectionChange }: Tes
             </button>
           </div>
 
-          {isLoading ? (
-            <p className="text-xs text-text/60">Loading tests...</p>
-          ) : null}
+          {isLoading ? <p className="text-xs text-text/60">Loading tests...</p> : null}
           {error ? (
             <p role="alert" className="text-xs text-spam">
               {error}

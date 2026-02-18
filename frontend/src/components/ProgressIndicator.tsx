@@ -35,11 +35,14 @@ const getVariant = (
   return remainingSeconds <= warningThreshold ? "warning" : "normal";
 };
 
-const variantStyles: Record<ProgressVariant, {
-  bar: string;
-  badge: string;
-  track: string;
-}> = {
+const variantStyles: Record<
+  ProgressVariant,
+  {
+    bar: string;
+    badge: string;
+    track: string;
+  }
+> = {
   normal: {
     bar: "bg-clean",
     badge: "text-clean border-clean/40",
@@ -94,9 +97,7 @@ export default function ProgressIndicator({
           ? anchor.elapsedMs + Math.max(0, Date.now() - anchor.timestamp)
           : baseElapsedMs;
 
-      setElapsedMs((previous) =>
-        previous === nextElapsedMs ? previous : nextElapsedMs,
-      );
+      setElapsedMs((previous) => (previous === nextElapsedMs ? previous : nextElapsedMs));
     }, 1000);
 
     return () => {
@@ -141,16 +142,10 @@ export default function ProgressIndicator({
 
       <div className="mt-4 space-y-3">
         <div className="flex flex-wrap items-center justify-between gap-2">
-          <span
-            data-testid="progress-current-test"
-            className="text-sm font-semibold text-text/80"
-          >
+          <span data-testid="progress-current-test" className="text-sm font-semibold text-text/80">
             {progress?.currentTest ?? "Preparing analysis"}
           </span>
-          <span
-            data-testid="progress-percentage"
-            className="text-sm font-semibold text-text/70"
-          >
+          <span data-testid="progress-percentage" className="text-sm font-semibold text-text/70">
             {percentage}%
           </span>
         </div>
@@ -173,9 +168,7 @@ export default function ProgressIndicator({
           role="alert"
           className="mt-4 rounded-xl border border-spam/30 bg-spam/10 p-4 text-xs text-text/80"
         >
-          <p className="font-semibold text-spam">
-            Timeout reached at {timeoutSeconds} seconds.
-          </p>
+          <p className="font-semibold text-spam">Timeout reached at {timeoutSeconds} seconds.</p>
           <p className="mt-2 text-text/70">Incomplete tests:</p>
           <p data-testid="timeout-tests" className="mt-1 font-mono text-text/70">
             {incompleteTests.length > 0 ? incompleteTests.join(", ") : "None"}

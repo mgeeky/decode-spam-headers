@@ -83,10 +83,7 @@ describe("TestResultCard", () => {
 
       const { container } = render(<TestResultCard result={result} />);
 
-      const severityBadge = getByTestId(
-        container,
-        `test-result-severity-${result.testId}`,
-      );
+      const severityBadge = getByTestId(container, `test-result-severity-${result.testId}`);
 
       expect(severityBadge.textContent ?? "").toContain(severityCase.label);
       expect(severityBadge.className).toContain(severityCase.className);

@@ -66,9 +66,7 @@ describe("ProgressIndicator", () => {
     expect(indicator.getAttribute("data-status")).toBe("analysing");
     expect(indicator.getAttribute("data-variant")).toBe("normal");
 
-    expect(getByTestId(container, "progress-percentage").textContent ?? "").toMatch(
-      /50%/,
-    );
+    expect(getByTestId(container, "progress-percentage").textContent ?? "").toMatch(/50%/);
     expect(getByTestId(container, "progress-current-test").textContent ?? "").toMatch(
       /SpamAssassin Rule Hits/,
     );
@@ -117,8 +115,6 @@ describe("ProgressIndicator", () => {
     expect(getByTestId(container, "timeout-tests").textContent ?? "").toMatch(
       /Mimecast Fingerprint/,
     );
-    expect(getByTestId(container, "timeout-tests").textContent ?? "").toMatch(
-      /Proofpoint TAP/,
-    );
+    expect(getByTestId(container, "timeout-tests").textContent ?? "").toMatch(/Proofpoint TAP/);
   });
 });

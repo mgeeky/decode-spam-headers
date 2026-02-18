@@ -93,9 +93,7 @@ export default function Home() {
             </div>
           </section>
 
-          {result ? (
-            <AnalysisResults report={result} />
-          ) : null}
+          {result ? <AnalysisResults report={result} /> : null}
         </div>
       </div>
     </main>

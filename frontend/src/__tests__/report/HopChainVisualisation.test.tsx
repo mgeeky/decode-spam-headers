@@ -84,9 +84,7 @@ describe("HopChainVisualisation", () => {
   it("renders connectors between hop nodes", () => {
     const { container } = render(<HopChainVisualisation hopChain={hopChain} />);
 
-    const connectors = container.querySelectorAll(
-      '[data-testid^="hop-chain-connector-"]',
-    );
+    const connectors = container.querySelectorAll('[data-testid^="hop-chain-connector-"]');
 
     expect(connectors.length).toBe(hopChain.length - 1);
   });

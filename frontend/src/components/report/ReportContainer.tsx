@@ -118,9 +118,7 @@ export default function ReportContainer({ report }: { report: AnalysisReport }) 
     >
       <header className="flex flex-wrap items-start justify-between gap-4">
         <div>
-          <p className="text-xs uppercase tracking-[0.2em] text-info/80">
-            Interactive Report
-          </p>
+          <p className="text-xs uppercase tracking-[0.2em] text-info/80">Interactive Report</p>
           <h2 className="text-lg font-semibold text-text/90">Header Analysis Summary</h2>
         </div>
         <div className="rounded-full border border-info/20 bg-background/40 px-4 py-2 text-xs text-text/60">
@@ -131,9 +129,7 @@ export default function ReportContainer({ report }: { report: AnalysisReport }) 
       <section className="rounded-2xl border border-info/10 bg-background/40 p-4">
         <div className="flex items-center justify-between">
           <h3 className="text-sm font-semibold text-text/90">Summary Stats</h3>
-          <span className="text-[10px] uppercase tracking-[0.2em] text-text/40">
-            Totals
-          </span>
+          <span className="text-[10px] uppercase tracking-[0.2em] text-text/40">Totals</span>
         </div>
         <div className="mt-4 grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
           {summaryItems.map((item) => (
@@ -180,10 +176,7 @@ export default function ReportContainer({ report }: { report: AnalysisReport }) 
 
         <div className="mt-4 flex flex-col gap-4">
           {filteredResults.map((result) => (
-            <div
-              key={result.testId}
-              data-testid={`test-result-card-${result.testId}`}
-            >
+            <div key={result.testId} data-testid={`test-result-card-${result.testId}`}>
               <TestResultCard result={result} highlightQuery={query} />
             </div>
           ))}

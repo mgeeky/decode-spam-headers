@@ -180,9 +180,7 @@ describe("TestSelector", () => {
 
     const selectAllButton = getSelectAllButton(container);
     act(() => {
-      selectAllButton.dispatchEvent(
-        new KeyboardEvent("keydown", { key: "Enter", bubbles: true }),
-      );
+      selectAllButton.dispatchEvent(new KeyboardEvent("keydown", { key: "Enter", bubbles: true }));
     });
 
     sampleTests.forEach((test) => {
@@ -191,9 +189,7 @@ describe("TestSelector", () => {
 
     const deselectAllButton = getDeselectAllButton(container);
     act(() => {
-      deselectAllButton.dispatchEvent(
-        new KeyboardEvent("keydown", { key: " ", bubbles: true }),
-      );
+      deselectAllButton.dispatchEvent(new KeyboardEvent("keydown", { key: " ", bubbles: true }));
     });
 
     sampleTests.forEach((test) => {

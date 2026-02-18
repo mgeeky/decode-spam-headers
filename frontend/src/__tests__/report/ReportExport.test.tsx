@@ -92,18 +92,14 @@ beforeEach(() => {
   }
 
   lastBlob = null;
-  createObjectUrlSpy = vi
-    .spyOn(URL, "createObjectURL")
-    .mockImplementation((blob: Blob) => {
-      lastBlob = blob;
-      return "blob:report";
-    });
+  createObjectUrlSpy = vi.spyOn(URL, "createObjectURL").mockImplementation((blob: Blob) => {
+    lastBlob = blob;
+    return "blob:report";
+  });
   revokeObjectUrlSpy = vi.spyOn(URL, "revokeObjectURL").mockImplementation(() => {
     return undefined;
   });
-  clickSpy = vi
-    .spyOn(HTMLAnchorElement.prototype, "click")
-    .mockImplementation(() => undefined);
+  clickSpy = vi.spyOn(HTMLAnchorElement.prototype, "click").mockImplementation(() => undefined);
 });
 
 afterEach(() => {

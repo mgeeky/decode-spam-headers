@@ -4,13 +4,7 @@ import { flushSync } from "react-dom";
 import { apiClient, type SseEvent } from "../lib/api-client";
 import type { AnalysisConfig, AnalysisProgress, AnalysisReport } from "../types/analysis";
 
-export type AnalysisStatus =
-  | "idle"
-  | "submitting"
-  | "analysing"
-  | "complete"
-  | "error"
-  | "timeout";
+export type AnalysisStatus = "idle" | "submitting" | "analysing" | "complete" | "error" | "timeout";
 
 export interface AnalysisRequest {
   headers: string;
@@ -112,14 +106,11 @@ const useAnalysis = (): UseAnalysisState => {
       hasProgressRef.current = false;
 
       try {
-        await apiClient.stream<AnalysisRequest, AnalysisProgress | AnalysisReport>(
-          "/api/analyse",
-          {
-            body: request,
-            signal: controller.signal,
-            onEvent: (event) => handleEvent(event, requestId, controller.signal),
-          },
-        );
+        await apiClient.stream<AnalysisRequest, AnalysisProgress | AnalysisReport>("/api/analyse", {
+          body: request,
+          signal: controller.signal,
+          onEvent: (event) => handleEvent(event, requestId, controller.signal),
+        });
       } catch (err) {
         if (!mountedRef.current || controller.signal.aborted) {
           return;

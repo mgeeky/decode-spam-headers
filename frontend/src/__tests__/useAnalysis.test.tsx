@@ -148,12 +148,10 @@ describe("useAnalysis", () => {
   });
 
   it("submits analysis and handles SSE progress + result", async () => {
-    const streamSpy = vi.spyOn(apiClient, "stream").mockImplementation(
-      async (_path, options) => {
-        options.onEvent({ event: "progress", data: progressEvent, raw: "" });
-        options.onEvent({ event: "result", data: completeReport, raw: "" });
-      },
-    );
+    const streamSpy = vi.spyOn(apiClient, "stream").mockImplementation(async (_path, options) => {
+      options.onEvent({ event: "progress", data: progressEvent, raw: "" });
+      options.onEvent({ event: "result", data: completeReport, raw: "" });
+    });
 
     const statuses: string[] = [];
     const { container } = render(
@@ -161,9 +159,7 @@ describe("useAnalysis", () => {
     );
 
     act(() => {
-      getByTestId(container, "submit").dispatchEvent(
-        new MouseEvent("click", { bubbles: true }),
-      );
+      getByTestId(container, "submit").dispatchEvent(new MouseEvent("click", { bubbles: true }));
     });
 
     await act(async () => {
@@ -180,9 +176,7 @@ describe("useAnalysis", () => {
     );
 
     expect(statuses).toEqual(["idle", "submitting", "analysing", "complete"]);
-    expect(getByTestId(container, "current-test").textContent).toMatch(
-      /SpamAssassin Rule Hits/,
-    );
+    expect(getByTestId(container, "current-test").textContent).toMatch(/SpamAssassin Rule Hits/);
     expect(getByTestId(container, "percentage").textContent).toBe("33");
     expect(getByTestId(container, "result-total").textContent).toBe("3");
   });
@@ -198,9 +192,7 @@ describe("useAnalysis", () => {
     );
 
     act(() => {
-      getByTestId(container, "submit").dispatchEvent(
-        new MouseEvent("click", { bubbles: true }),
-      );
+      getByTestId(container, "submit").dispatchEvent(new MouseEvent("click", { bubbles: true }));
     });
 
     await act(async () => {
@@ -220,9 +212,7 @@ describe("useAnalysis", () => {
     );
 
     act(() => {
-      getByTestId(container, "submit").dispatchEvent(
-        new MouseEvent("click", { bubbles: true }),
-      );
+      getByTestId(container, "submit").dispatchEvent(new MouseEvent("click", { bubbles: true }));
     });
 
     await act(async () => {
@@ -252,9 +242,7 @@ describe("useAnalysis", () => {
     );
 
     act(() => {
-      getByTestId(container, "submit").dispatchEvent(
-        new MouseEvent("click", { bubbles: true }),
-      );
+      getByTestId(container, "submit").dispatchEvent(new MouseEvent("click", { bubbles: true }));
     });
 
     await act(async () => {
@@ -262,9 +250,7 @@ describe("useAnalysis", () => {
     });
 
     act(() => {
-      getByTestId(container, "cancel").dispatchEvent(
-        new MouseEvent("click", { bubbles: true }),
-      );
+      getByTestId(container, "cancel").dispatchEvent(new MouseEvent("click", { bubbles: true }));
     });
 
     await act(async () => {
