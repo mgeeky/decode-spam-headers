@@ -84,7 +84,7 @@ All tasks in this phase are parallelizable [P] since they are independent E2E sp
 - [x] All Playwright E2E specs pass: `npx playwright test`
 - [x] Both backend (uvicorn) and frontend (NextJS) start automatically via Playwright `webServer` config
 - [x] Visual regression baselines committed to `frontend/e2e/__snapshots__/`
-- [ ] Zero axe-core WCAG 2.1 AA violations across all tested views
+- [x] Zero axe-core WCAG 2.1 AA violations across all tested views (verified via `npx playwright test e2e/accessibility.spec.ts`)
 - [ ] No horizontal scrollbar or layout issues at any tested viewport (320–2560px)
 - [ ] All user flows (paste, drop, select, analyse, report, cache, rate-limit) pass E2E
 - [ ] Playwright test report generated (HTML report available for review)
