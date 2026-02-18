@@ -44,7 +44,7 @@ This phase protects the analysis service from abuse with per-IP rate limiting an
 - [x] Bypass token exempts IP from rate limiting on subsequent requests
 - [x] `GET /api/health` returns `{status, version, uptime, scannerCount}`
 - [x] All routers and CORS middleware are registered in `main.py`
-- [ ] Application starts statelessly — no database, no session management
+- [x] Application starts statelessly — no database, no session management. Verified `backend/app/main.py` registers only CORS + rate limiter middleware and does not initialize any DB/session services.
 - [ ] CAPTCHA modal is keyboard accessible (Tab, Enter, Escape to close)
 - [ ] Linting passes on both sides
 - [ ] Run `/speckit.analyze` to verify consistency
