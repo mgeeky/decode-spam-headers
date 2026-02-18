@@ -1,5 +1,6 @@
 "use client";
 
+import { useEffect, useRef, useState } from "react";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faSpinner } from "@fortawesome/free-solid-svg-icons";
 
@@ -62,7 +63,42 @@ export default function ProgressIndicator({
   timeoutSeconds,
   incompleteTests = [],
 }: ProgressIndicatorProps) {
-  const elapsedSeconds = progress ? Math.floor(progress.elapsedMs / 1000) : 0;
+  const [nowMs, setNowMs] = useState(() => Date.now());
+  const anchorRef = useRef<{ elapsedMs: number; timestamp: number } | null>(null);
+
+  useEffect(() => {
+    if (status !== "analysing") {
+      return;
+    }
+
+    const interval = window.setInterval(() => {
+      setNowMs(Date.now());
+    }, 1000);
+
+    return () => {
+      window.clearInterval(interval);
+    };
+  }, [status]);
+
+  useEffect(() => {
+    if (!progress || status !== "analysing") {
+      anchorRef.current = null;
+      return;
+    }
+
+    anchorRef.current = {
+      elapsedMs: progress.elapsedMs,
+      timestamp: Date.now(),
+    };
+  }, [progress?.elapsedMs, status]);
+
+  const baseElapsedMs = progress?.elapsedMs ?? 0;
+  const anchor = anchorRef.current;
+  const elapsedMs =
+    status === "analysing" && progress && anchor
+      ? anchor.elapsedMs + Math.max(0, nowMs - anchor.timestamp)
+      : baseElapsedMs;
+  const elapsedSeconds = Math.floor(elapsedMs / 1000);
   const remainingSeconds = Math.max(0, timeoutSeconds - elapsedSeconds);
   const percentage = progress ? Math.round(progress.percentage) : 0;
   const variant = getVariant(status, remainingSeconds, timeoutSeconds);
