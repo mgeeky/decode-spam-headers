@@ -101,10 +101,10 @@ export default function TestResultCard({ result, highlightQuery = "" }: TestResu
         aria-controls={detailsId}
         onClick={toggle}
         onKeyDown={handleKeyDown}
-        className="flex w-full items-center justify-between gap-4 text-left focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-info"
+        className="flex w-full flex-wrap items-center justify-between gap-4 text-left focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-info"
       >
-        <div className="flex flex-col">
-          <span className="text-sm font-semibold text-text/90">
+        <div className="min-w-0 flex flex-col">
+          <span className="break-words text-sm font-semibold text-text/90">
             {highlightText(result.testName, highlightQuery)}
           </span>
           <span className="text-xs text-text/50">Test #{result.testId}</span>
@@ -136,19 +136,21 @@ export default function TestResultCard({ result, highlightQuery = "" }: TestResu
           <div className="rounded-xl border border-info/10 bg-background/40 p-3">
             <div className="flex flex-col gap-1">
               <span className="text-[10px] uppercase tracking-[0.2em] text-text/60">Header</span>
-              <span className="text-xs text-text/60">
+              <span className="break-words text-xs text-text/60">
                 {highlightText(result.headerName, highlightQuery)}
               </span>
-              <span className="font-mono text-sm text-text/80">{result.headerValue}</span>
+              <span className="break-words whitespace-pre-wrap font-mono text-sm text-text/80">
+                {result.headerValue}
+              </span>
             </div>
 
             {result.analysis ? (
-              <p className="mt-3 text-sm text-text/70">
+              <p className="mt-3 break-words text-sm text-text/70">
                 {highlightText(result.analysis, highlightQuery)}
               </p>
             ) : null}
             {result.description ? (
-              <p className="mt-1 text-xs text-text/50">{result.description}</p>
+              <p className="mt-1 break-words text-xs text-text/50">{result.description}</p>
             ) : null}
 
             {result.status === "error" ? (

@@ -142,7 +142,10 @@ export default function ProgressIndicator({
 
       <div className="mt-4 space-y-3">
         <div className="flex flex-wrap items-center justify-between gap-2">
-          <span data-testid="progress-current-test" className="text-sm font-semibold text-text/80">
+          <span
+            data-testid="progress-current-test"
+            className="break-words text-sm font-semibold text-text/80"
+          >
             {progress?.currentTest ?? "Preparing analysis"}
           </span>
           <span data-testid="progress-percentage" className="text-sm font-semibold text-text/70">
@@ -170,7 +173,7 @@ export default function ProgressIndicator({
         >
           <p className="font-semibold text-spam">Timeout reached at {timeoutSeconds} seconds.</p>
           <p className="mt-2 text-text/70">Incomplete tests:</p>
-          <p data-testid="timeout-tests" className="mt-1 font-mono text-text/70">
+          <p data-testid="timeout-tests" className="mt-1 break-words font-mono text-text/70">
             {incompleteTests.length > 0 ? incompleteTests.join(", ") : "None"}
           </p>
         </div>

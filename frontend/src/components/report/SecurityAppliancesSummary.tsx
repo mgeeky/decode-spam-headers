@@ -35,11 +35,11 @@ export default function SecurityAppliancesSummary({ appliances }: SecurityApplia
             <div
               key={`${appliance.vendor}-${appliance.name}`}
               data-testid={`security-appliance-${index}`}
-              className="inline-flex items-center gap-2 rounded-full border border-info/20 bg-background/40 px-3 py-1 text-xs text-text/70"
+              className="inline-flex max-w-full flex-wrap items-center gap-2 rounded-full border border-info/20 bg-background/40 px-3 py-1 text-xs text-text/70"
             >
               <FontAwesomeIcon icon={faShield} className="text-[10px] text-info" />
-              <span className="font-semibold">{appliance.vendor}</span>
-              <span className="text-text/50">{appliance.name}</span>
+              <span className="break-words font-semibold">{appliance.vendor}</span>
+              <span className="break-words text-text/50">{appliance.name}</span>
             </div>
           ))}
         </div>

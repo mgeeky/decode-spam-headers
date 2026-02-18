@@ -127,4 +127,25 @@ describe("TestResultCard", () => {
     const errorIndicator = getByTestId(container, `test-result-error-${result.testId}`);
     expect(errorIndicator.textContent ?? "").toMatch(/SpamAssassin database timeout/);
   });
+
+  it("adds wrapping classes for long header values", () => {
+    const result = buildResult({
+      testId: 505,
+      headerValue: "X".repeat(200),
+    });
+    const { container } = render(<TestResultCard result={result} />);
+
+    const details = container.querySelector(`#test-result-details-${result.testId}`);
+    if (!details) {
+      throw new Error("Expected test details container to be rendered.");
+    }
+
+    const headerValue = details.querySelector("span.font-mono");
+    if (!headerValue) {
+      throw new Error("Expected header value to be rendered.");
+    }
+
+    expect(headerValue.className).toContain("break-words");
+    expect(headerValue.className).toContain("whitespace-pre-wrap");
+  });
 });

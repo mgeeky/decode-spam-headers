@@ -59,7 +59,7 @@ export default function AnalysisControls({ config, onChange }: AnalysisControlsP
           <span className="font-mono text-[10px] text-text/50">US2</span>
         </div>
         <div className="mt-4 grid gap-3 sm:grid-cols-2">
-          <div className="flex items-center justify-between gap-4 rounded-xl border border-info/10 bg-background/40 p-4">
+          <div className="flex flex-col items-start gap-3 rounded-xl border border-info/10 bg-background/40 p-4 sm:flex-row sm:items-center sm:justify-between">
             <div className="flex items-start gap-3">
               <div className="mt-1 rounded-full border border-info/20 bg-background/60 p-2 text-xs text-info/80">
                 <FontAwesomeIcon icon={faGlobe} />
@@ -83,7 +83,7 @@ export default function AnalysisControls({ config, onChange }: AnalysisControlsP
               {resolvedConfig.resolve ? "On" : "Off"}
             </button>
           </div>
-          <div className="flex items-center justify-between gap-4 rounded-xl border border-info/10 bg-background/40 p-4">
+          <div className="flex flex-col items-start gap-3 rounded-xl border border-info/10 bg-background/40 p-4 sm:flex-row sm:items-center sm:justify-between">
             <div className="flex items-start gap-3">
               <div className="mt-1 rounded-full border border-info/20 bg-background/60 p-2 text-xs text-info/80">
                 <FontAwesomeIcon icon={faCode} />

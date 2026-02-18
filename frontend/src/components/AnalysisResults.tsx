@@ -52,9 +52,11 @@ export default function AnalysisResults({ report }: AnalysisResultsProps) {
               className="rounded-2xl border border-info/10 bg-background/40 p-4"
             >
               <div className="flex flex-wrap items-center justify-between gap-3">
-                <div className="flex flex-col">
-                  <span className="text-sm font-semibold text-text/90">{result.testName}</span>
-                  <span className="text-xs text-text/50">
+                <div className="min-w-0 flex flex-col">
+                  <span className="break-words text-sm font-semibold text-text/90">
+                    {result.testName}
+                  </span>
+                  <span className="break-words text-xs text-text/50">
                     Test #{result.testId} · {result.headerName}
                   </span>
                 </div>
@@ -69,10 +71,10 @@ export default function AnalysisResults({ report }: AnalysisResultsProps) {
               </div>
 
               {result.analysis ? (
-                <p className="mt-3 text-sm text-text/70">{result.analysis}</p>
+                <p className="mt-3 break-words text-sm text-text/70">{result.analysis}</p>
               ) : null}
               {result.description ? (
-                <p className="mt-1 text-xs text-text/50">{result.description}</p>
+                <p className="mt-1 break-words text-xs text-text/50">{result.description}</p>
               ) : null}
 
               {result.status === "error" ? (

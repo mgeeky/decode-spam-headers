@@ -88,4 +88,16 @@ describe("HopChainVisualisation", () => {
 
     expect(connectors.length).toBe(hopChain.length - 1);
   });
+
+  it("adds wrapping classes for long hostnames and IPs", () => {
+    const { container } = render(<HopChainVisualisation hopChain={hopChain} />);
+
+    const firstHop = getByTestId(container, "hop-chain-node-0");
+    const spanNodes = Array.from(firstHop.querySelectorAll("span"));
+    const hostnameNode = spanNodes.find((node) => node.textContent === "mail.sender.example");
+    const ipNode = spanNodes.find((node) => node.textContent === "192.0.2.10");
+
+    expect(hostnameNode?.className ?? "").toContain("break-words");
+    expect(ipNode?.className ?? "").toContain("break-all");
+  });
 });

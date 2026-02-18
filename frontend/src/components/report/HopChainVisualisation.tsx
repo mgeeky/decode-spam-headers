@@ -47,22 +47,24 @@ export default function HopChainVisualisation({ hopChain }: HopChainVisualisatio
                   <span className="flex h-10 w-10 items-center justify-center rounded-xl border border-info/20 bg-info/10 text-info">
                     <FontAwesomeIcon icon={faServer} />
                   </span>
-                  <div className="flex-1">
+                  <div className="min-w-0 flex-1">
                     <div className="flex flex-wrap items-baseline gap-2">
-                      <span className="text-sm font-semibold text-text/90">{node.hostname}</span>
+                      <span className="break-words text-sm font-semibold text-text/90">
+                        {node.hostname}
+                      </span>
                       {node.ip ? (
-                        <span className="font-mono text-xs text-text/60">{node.ip}</span>
+                        <span className="break-all font-mono text-xs text-text/60">{node.ip}</span>
                       ) : null}
                     </div>
                     <div className="mt-2 flex flex-wrap gap-4 text-xs text-text/60">
                       {node.timestamp ? (
-                        <span className="flex items-center gap-2">
+                        <span className="flex items-center gap-2 break-words">
                           <FontAwesomeIcon icon={faClock} className="text-[10px]" />
                           {node.timestamp}
                         </span>
                       ) : null}
                       {node.serverInfo ? (
-                        <span className="flex items-center gap-2">
+                        <span className="flex items-center gap-2 break-words">
                           <FontAwesomeIcon icon={faNetworkWired} className="text-[10px]" />
                           {node.serverInfo}
                         </span>
