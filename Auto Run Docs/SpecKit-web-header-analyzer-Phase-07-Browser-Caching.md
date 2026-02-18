@@ -38,7 +38,7 @@ Use a consistent prefix to avoid collisions:
 - [x] "Clear Cache" button removes all stored data and resets the view to empty state
 - [x] Subtle indicator distinguishes cached results from fresh analysis
 - [x] Size-awareness warns if localStorage is near capacity
-- [ ] Linting passes (`npx eslint src/`, `npx prettier --check src/`)
+- [x] Linting passes (`npx eslint src/`, `npx prettier --check src/`)
 - [x] Run `/speckit.analyze` to verify consistency
 
 Note: `npx prettier --check src/` reports existing formatting warnings in `src/__tests__/page.test.tsx` and `src/__tests__/useAnalysisCache.test.tsx`.

@@ -153,9 +153,9 @@ const useAnalysisCache = (): UseAnalysisCacheState => {
 
     return Boolean(
       localStorage.getItem(HEADER_KEY) &&
-        localStorage.getItem(CONFIG_KEY) &&
-        localStorage.getItem(RESULT_KEY) &&
-        localStorage.getItem(TIMESTAMP_KEY),
+      localStorage.getItem(CONFIG_KEY) &&
+      localStorage.getItem(RESULT_KEY) &&
+      localStorage.getItem(TIMESTAMP_KEY),
     );
   }, []);
 

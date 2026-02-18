@@ -99,9 +99,7 @@ const CacheHarness = ({ payload }: { payload: CachedPayload }) => {
       <span data-testid="has-cache">{hasCache ? "true" : "false"}</span>
       <span data-testid="loaded-headers">{loaded?.headers ?? ""}</span>
       <span data-testid="loaded-test-count">{loaded?.result.metadata.totalTests ?? ""}</span>
-      <span data-testid="loaded-test-ids">
-        {loaded ? loaded.config.testIds.join(",") : ""}
-      </span>
+      <span data-testid="loaded-test-ids">{loaded ? loaded.config.testIds.join(",") : ""}</span>
       <span data-testid="near-limit">{isNearLimit ? "true" : "false"}</span>
       <button type="button" data-testid="save" onClick={() => save(payload)}>
         Save
