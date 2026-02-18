@@ -48,7 +48,7 @@ ReportContainer
 
 ## Completion
 
-- [ ] All vitest tests pass: `npx vitest run src/__tests__/report/`
+- [x] All vitest tests pass: `npx vitest run src/__tests__/report/`
 - [ ] Report renders all test results as collapsible cards with correct severity colours
 - [ ] Hop chain displays as a vertical visual flow with server details and connecting arrows
 - [ ] Security appliances show as badges; empty state handled gracefully
