@@ -74,6 +74,7 @@ const report: AnalysisReport = {
 let createObjectUrlSpy: ReturnType<typeof vi.spyOn> | null = null;
 let revokeObjectUrlSpy: ReturnType<typeof vi.spyOn> | null = null;
 let clickSpy: ReturnType<typeof vi.spyOn> | null = null;
+let lastBlob: Blob | null = null;
 
 const originalUrlStatics: UrlStatics = {
   createObjectURL: (URL as unknown as UrlStatics).createObjectURL,
@@ -90,9 +91,13 @@ beforeEach(() => {
     urlStatics.revokeObjectURL = () => undefined;
   }
 
+  lastBlob = null;
   createObjectUrlSpy = vi
     .spyOn(URL, "createObjectURL")
-    .mockReturnValue("blob:report");
+    .mockImplementation((blob: Blob) => {
+      lastBlob = blob;
+      return "blob:report";
+    });
   revokeObjectUrlSpy = vi.spyOn(URL, "revokeObjectURL").mockImplementation(() => {
     return undefined;
   });
@@ -119,7 +124,7 @@ afterEach(() => {
 });
 
 describe("ReportExport", () => {
-  it("triggers a JSON download", () => {
+  it("triggers a JSON download", async () => {
     const { container } = render(<ReportExport report={report} />);
 
     const jsonButton = getByTestId(container, "report-export-json");
@@ -130,6 +135,13 @@ describe("ReportExport", () => {
 
     expect(createObjectUrlSpy).toHaveBeenCalled();
     expect(clickSpy).toHaveBeenCalled();
+    expect(lastBlob).not.toBeNull();
+    expect(lastBlob?.type).toBe("application/json");
+
+    const text = await lastBlob?.text();
+    const parsed = JSON.parse(text ?? "{}") as AnalysisReport;
+    expect(parsed.results).toHaveLength(1);
+    expect(parsed.results[0]?.testId).toBe(101);
   });
 
   it("triggers an HTML download", () => {

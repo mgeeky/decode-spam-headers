@@ -53,7 +53,7 @@ ReportContainer
 - [x] Hop chain displays as a vertical visual flow with server details and connecting arrows
 - [x] Security appliances show as badges; empty state handled gracefully
 - [x] Search filters results in real-time across test name, header name, and analysis text
-- [ ] Export JSON produces a valid JSON file containing all results
+- [x] Export JSON produces a valid JSON file containing all results
 - [ ] Export HTML produces a styled standalone page viewable in any browser
 - [ ] All report components are keyboard accessible
 - [ ] Linting passes (`npx eslint src/`, `npx prettier --check src/`)
