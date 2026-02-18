@@ -1,4 +1,5 @@
 from fastapi import FastAPI
+from fastapi.middleware.cors import CORSMiddleware
 
 from app.core.config import get_settings
 from app.middleware.rate_limiter import RateLimiterMiddleware, SlidingWindowRateLimiter
@@ -9,6 +10,13 @@ from app.routers.tests import router as tests_router
 
 app = FastAPI(title="Web Header Analyzer API")
 settings = get_settings()
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=settings.cors_origins,
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 rate_limiter = SlidingWindowRateLimiter(
     settings.rate_limit_requests, settings.rate_limit_window_seconds
 )

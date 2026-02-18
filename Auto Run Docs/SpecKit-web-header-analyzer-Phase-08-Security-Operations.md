@@ -33,17 +33,17 @@ This phase protects the analysis service from abuse with per-IP rate limiting an
 - [x] T042 [US6] Create `backend/app/routers/captcha.py` — `POST /api/captcha/verify` endpoint. Server-generated visual noise CAPTCHA (randomly distorted text). Returns HMAC-signed bypass token (5-minute expiry) on success. Token exempts IP from rate limiting. Response schema in `backend/app/schemas/captcha.py`. Verify `test_captcha.py` passes (TDD Green)
 - [x] T043 [P] [US6] Create `frontend/src/components/CaptchaChallenge.tsx` — modal on 429 response. Displays CAPTCHA image, on verification stores bypass token and retries original request. FontAwesome lock/unlock icons. Keyboard accessible (NFR-02). Verify `CaptchaChallenge.test.tsx` passes (TDD Green)
 - [x] T044 [US6] Create `backend/app/schemas/health.py` and `backend/app/routers/health.py` — `GET /api/health` returning status (up/degraded/down), version, uptime, scanner count (NFR-15). Verify `test_health.py` passes (TDD Green)
-- [ ] T045 [US6] Register all routers and middleware in `backend/app/main.py` — CORS middleware (frontend origin), rate limiter, routers (analysis, tests, health, captcha). Verify stateless operation (NFR-16). Note: rate limiter per-instance state is accepted trade-off (see T041)
+- [x] T045 [US6] Register all routers and middleware in `backend/app/main.py` — CORS middleware (frontend origin), rate limiter, routers (analysis, tests, health, captcha). Verify stateless operation (NFR-16). Note: rate limiter per-instance state is accepted trade-off (see T041)
 
 ## Completion
 
-- [ ] `pytest backend/tests/api/test_rate_limiter.py backend/tests/api/test_captcha.py backend/tests/api/test_health.py` all pass
-- [ ] All vitest tests pass: `npx vitest run src/__tests__/CaptchaChallenge.test.tsx`
+- [x] `pytest backend/tests/api/test_rate_limiter.py backend/tests/api/test_captcha.py backend/tests/api/test_health.py` all pass
+- [x] All vitest tests pass: `npx vitest run src/__tests__/CaptchaChallenge.test.tsx`
 - [ ] Exceeding rate limit returns HTTP 429 with Retry-After header and CAPTCHA challenge
 - [ ] Solving CAPTCHA returns HMAC-signed bypass token (5-minute expiry)
 - [ ] Bypass token exempts IP from rate limiting on subsequent requests
 - [ ] `GET /api/health` returns `{status, version, uptime, scannerCount}`
-- [ ] All routers and CORS middleware are registered in `main.py`
+- [x] All routers and CORS middleware are registered in `main.py`
 - [ ] Application starts statelessly — no database, no session management
 - [ ] CAPTCHA modal is keyboard accessible (Tab, Enter, Escape to close)
 - [ ] Linting passes on both sides
