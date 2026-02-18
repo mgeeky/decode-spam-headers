@@ -94,3 +94,4 @@ Note: Attempted `/speckit.analyze` on 2026-02-18 in PowerShell during Auto Run i
 Re-attempted on 2026-02-18 in this run (PowerShell); command still not recognized.
 Re-attempted on 2026-02-18 in this run (PowerShell) by spam-codex; still not recognized.
 Re-attempted on 2026-02-18 in this run (PowerShell); same "not recognized" error.
+Re-attempted on 2026-02-18 in this run (PowerShell) by spam-codex; same "not recognized" error.
