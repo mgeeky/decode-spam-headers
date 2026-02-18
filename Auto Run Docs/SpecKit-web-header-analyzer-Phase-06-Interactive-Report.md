@@ -57,4 +57,4 @@ ReportContainer
 - [x] Export HTML produces a styled standalone page viewable in any browser
 - [x] All report components are keyboard accessible
 - [x] Linting passes (`npx eslint src/`, `npx prettier --check src/`)
-- [ ] Run `/speckit.analyze` to verify consistency
+- [ ] Run `/speckit.analyze` to verify consistency (attempted on 2026-02-18 in PowerShell during Auto Run iteration 00001; command not available in this environment, `/speckit.analyze` not recognized)
