@@ -1,4 +1,5 @@
 import { defineConfig, devices } from '@playwright/test';
+import path from 'path';
 
 /**
  * Read environment variables from file.
@@ -76,7 +77,7 @@ export default defineConfig({
       command: 'python -m uvicorn app.main:app --app-dir backend --port 8000',
       url: 'http://localhost:8000',
       reuseExistingServer: !process.env.CI,
-      cwd: '..',
+      cwd: path.resolve(__dirname, '..'),
       env: {
         WHA_CORS_ORIGINS: '["http://localhost:3100"]',
       },
@@ -85,6 +86,7 @@ export default defineConfig({
       command: 'npm run dev -- --port 3100',
       url: 'http://localhost:3100',
       reuseExistingServer: !process.env.CI,
+      cwd: path.resolve(__dirname),
     },
   ],
 });
