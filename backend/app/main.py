@@ -1,6 +1,9 @@
 from fastapi import FastAPI
 
+from app.routers.tests import router as tests_router
+
 app = FastAPI(title="Web Header Analyzer API")
+app.include_router(tests_router)
 
 
 @app.get("/")
