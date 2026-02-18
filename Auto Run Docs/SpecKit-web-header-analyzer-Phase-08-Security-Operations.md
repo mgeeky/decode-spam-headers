@@ -39,7 +39,7 @@ This phase protects the analysis service from abuse with per-IP rate limiting an
 
 - [x] `pytest backend/tests/api/test_rate_limiter.py backend/tests/api/test_captcha.py backend/tests/api/test_health.py` all pass
 - [x] All vitest tests pass: `npx vitest run src/__tests__/CaptchaChallenge.test.tsx`
-- [ ] Exceeding rate limit returns HTTP 429 with Retry-After header and CAPTCHA challenge
+- [x] Exceeding rate limit returns HTTP 429 with Retry-After header and CAPTCHA challenge
 - [ ] Solving CAPTCHA returns HMAC-signed bypass token (5-minute expiry)
 - [ ] Bypass token exempts IP from rate limiting on subsequent requests
 - [ ] `GET /api/health` returns `{status, version, uptime, scannerCount}`
