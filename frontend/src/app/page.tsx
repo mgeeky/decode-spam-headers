@@ -3,6 +3,7 @@
 import { useCallback, useState } from "react";
 
 import AnalyseButton from "../components/AnalyseButton";
+import AnalysisResults from "../components/AnalysisResults";
 import FileDropZone from "../components/FileDropZone";
 import HeaderInput from "../components/HeaderInput";
 import ProgressIndicator from "../components/ProgressIndicator";
@@ -18,7 +19,7 @@ const defaultConfig: AnalysisConfig = {
 
 export default function Home() {
   const [headerInput, setHeaderInput] = useState("");
-  const { status, progress, submit } = useAnalysis();
+  const { status, progress, result, submit } = useAnalysis();
   const hasHeaderInput = headerInput.trim().length > 0;
   const isOversized = headerInput.length > MAX_HEADER_INPUT_BYTES;
   const canAnalyse = hasHeaderInput && !isOversized;
@@ -89,6 +90,10 @@ export default function Home() {
               ) : null}
             </div>
           </section>
+
+          {result ? (
+            <AnalysisResults report={result} />
+          ) : null}
         </div>
       </div>
     </main>
