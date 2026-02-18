@@ -32,10 +32,12 @@ This phase implements the test selection panel and analysis configuration contro
 - [x] `GET /api/tests` returns all 106+ tests with id, name, and category
 - [x] All vitest tests pass: `npx vitest run src/__tests__/TestSelector.test.tsx src/__tests__/AnalysisControls.test.tsx`
 - [x] Test selector renders all 106+ tests with checkboxes
-- [ ] Select All / Deselect All buttons work correctly
+- [x] Select All / Deselect All buttons work correctly
 - [ ] Search/filter narrows visible tests by name
 - [ ] DNS resolution toggle defaults to off
 - [ ] Decode-all toggle is functional
 - [ ] All controls are keyboard accessible (Tab, Enter, Space)
 - [ ] Linting passes (`ruff check backend/`, `npx eslint src/`)
 - [ ] Run `/speckit.analyze` to verify consistency
+
+Note: Verified Select All/Deselect All behavior via `TestSelector.test.tsx` ("selects and deselects all tests") on 2026-02-18.
