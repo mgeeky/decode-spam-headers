@@ -33,7 +33,7 @@ This phase performs final integration, accessibility audit, responsive testing, 
 - [x] File drop flow works: drop EML → auto-populate → analyse → report. Notes: extract header block from dropped EML before populating input; updated FileDropZone tests and ran `npx vitest run src/__tests__/FileDropZone.test.tsx`.
 - [x] Cache flow works: analyse → reload → see cached results → clear cache. Notes: added Playwright cache flow coverage (reload + clear) in e2e/example.spec.ts and ran `npx playwright test e2e/example.spec.ts --project=chromium`.
 - [x] Rate limiting flow works: exceed limit → CAPTCHA modal → solve → retry succeeds. Notes: added Playwright rate limiting flow spec that mocks 429 response + CAPTCHA verify, asserts retry includes bypass token and succeeds; ran `npx playwright test e2e/rate-limiting.spec.ts --project=chromium`.
-- [ ] `pytest backend/tests/` passes with ≥80% coverage on new modules
+- [x] `pytest backend/tests/` passes with ≥80% coverage on new modules. Notes: ran `pytest backend/tests/ --cov=backend/app --cov-report=term` (total backend/app coverage 82%).
 - [ ] `npx vitest run --coverage` passes with ≥80% coverage on new components
 - [ ] `ruff check backend/` — zero errors
 - [ ] `npx eslint src/` — zero errors
