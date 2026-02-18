@@ -44,7 +44,7 @@ ReportContainer
 - [x] T033 [P] [US4] Create `frontend/src/components/report/ReportSearchBar.tsx` — search/filter bar above report (FR-20). Filters by text match against test name, header name, or analysis text. Highlights matches, shows count. FontAwesome search icon, Escape to clear. Verify `ReportSearchBar.test.tsx` passes (TDD Green)
 - [x] T034 [P] [US4] Create `frontend/src/components/report/ReportExport.tsx` — export as HTML (styled standalone page) or JSON (raw data) per FR-21. FontAwesome download icons, triggers browser download. Verify `ReportExport.test.tsx` passes (TDD Green)
 - [x] T035 [US4] Create `frontend/src/components/report/SecurityAppliancesSummary.tsx` — summary listing detected email security products as badges/tags with FontAwesome shield icons. Handle empty state (no appliances detected). Verify `SecurityAppliancesSummary.test.tsx` passes (TDD Green)
-- [ ] T036 [US4] Create `frontend/src/components/report/ReportContainer.tsx` — top-level wrapper receiving `AnalysisReport`. Renders: summary stats (total tests, passed, failed, severity breakdown), `TestResultCard` list, `HopChainVisualisation`, `SecurityAppliancesSummary`, `ReportSearchBar`, `ReportExport`. FontAwesome summary icons. Verify `ReportContainer.test.tsx` passes (TDD Green)
+- [x] T036 [US4] Create `frontend/src/components/report/ReportContainer.tsx` — top-level wrapper receiving `AnalysisReport`. Renders: summary stats (total tests, passed, failed, severity breakdown), `TestResultCard` list, `HopChainVisualisation`, `SecurityAppliancesSummary`, `ReportSearchBar`, `ReportExport`. FontAwesome summary icons. Verify `ReportContainer.test.tsx` passes (TDD Green)
 
 ## Completion
 

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, type ReactNode } from "react";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import {
   faBan,
@@ -33,9 +33,50 @@ const getErrorMessage = (result: TestResult): string => {
 
 type TestResultCardProps = {
   result: TestResult;
+  highlightQuery?: string;
 };
 
-export default function TestResultCard({ result }: TestResultCardProps) {
+const highlightText = (text: string, query: string): ReactNode => {
+  const normalizedQuery = query.trim().toLowerCase();
+  if (!normalizedQuery) {
+    return text;
+  }
+
+  const normalizedText = text.toLowerCase();
+  let startIndex = 0;
+  const parts: React.ReactNode[] = [];
+
+  while (startIndex < text.length) {
+    const matchIndex = normalizedText.indexOf(normalizedQuery, startIndex);
+    if (matchIndex === -1) {
+      break;
+    }
+
+    if (matchIndex > startIndex) {
+      parts.push(text.slice(startIndex, matchIndex));
+    }
+
+    const matchText = text.slice(matchIndex, matchIndex + normalizedQuery.length);
+    parts.push(
+      <mark
+        key={`${matchIndex}-${matchText}`}
+        className="rounded bg-accent/20 px-1 text-accent"
+      >
+        {matchText}
+      </mark>,
+    );
+
+    startIndex = matchIndex + normalizedQuery.length;
+  }
+
+  if (startIndex < text.length) {
+    parts.push(text.slice(startIndex));
+  }
+
+  return parts.length > 0 ? parts : text;
+};
+
+export default function TestResultCard({ result, highlightQuery = "" }: TestResultCardProps) {
   const [isExpanded, setIsExpanded] = useState(false);
   const severityStyle = severityStyles[result.severity];
   const detailsId = `test-result-details-${result.testId}`;
@@ -66,7 +107,9 @@ export default function TestResultCard({ result }: TestResultCardProps) {
         className="flex w-full items-center justify-between gap-4 text-left"
       >
         <div className="flex flex-col">
-          <span className="text-sm font-semibold text-text/90">{result.testName}</span>
+          <span className="text-sm font-semibold text-text/90">
+            {highlightText(result.testName, highlightQuery)}
+          </span>
           <span className="text-xs text-text/50">Test #{result.testId}</span>
         </div>
         <div className="flex items-center gap-3">
@@ -98,12 +141,16 @@ export default function TestResultCard({ result }: TestResultCardProps) {
               <span className="text-[10px] uppercase tracking-[0.2em] text-text/40">
                 Header
               </span>
-              <span className="text-xs text-text/60">{result.headerName}</span>
+              <span className="text-xs text-text/60">
+                {highlightText(result.headerName, highlightQuery)}
+              </span>
               <span className="font-mono text-sm text-text/80">{result.headerValue}</span>
             </div>
 
             {result.analysis ? (
-              <p className="mt-3 text-sm text-text/70">{result.analysis}</p>
+              <p className="mt-3 text-sm text-text/70">
+                {highlightText(result.analysis, highlightQuery)}
+              </p>
             ) : null}
             {result.description ? (
               <p className="mt-1 text-xs text-text/50">{result.description}</p>
