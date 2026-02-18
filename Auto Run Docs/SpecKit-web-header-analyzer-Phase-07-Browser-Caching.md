@@ -26,13 +26,13 @@ Use a consistent prefix to avoid collisions:
 
 ## Tasks
 
-- [x] T037 [US5] Write failing tests (TDD Red) in `frontend/src/__tests__/useAnalysisCache.test.ts` (save/load/clear with mocked localStorage, size awareness) and `frontend/src/__tests__/page.test.tsx` (cache restoration on mount, clear cache button)
-- [ ] T038 [P] [US5] Create `frontend/src/hooks/useAnalysisCache.ts` — hook managing localStorage with namespaced keys. Saves: headers text, analysis config, analysis result. Size-aware (warns near limits). Methods: `save()`, `load()`, `clear()`, `hasCachedData()`. Verify `useAnalysisCache.test.ts` passes (TDD Green)
+- [x] T037 [US5] Write failing tests (TDD Red) in `frontend/src/__tests__/useAnalysisCache.test.tsx` (save/load/clear with mocked localStorage, size awareness) and `frontend/src/__tests__/page.test.tsx` (cache restoration on mount, clear cache button)
+- [x] T038 [P] [US5] Create `frontend/src/hooks/useAnalysisCache.ts` — hook managing localStorage with namespaced keys. Saves: headers text, analysis config, analysis result. Size-aware (warns near limits). Methods: `save()`, `load()`, `clear()`, `hasCachedData()`. Verify `useAnalysisCache.test.tsx` passes (TDD Green)
 - [ ] T039 [US5] Integrate caching into `frontend/src/app/page.tsx` — on mount restore cached data, render cached report, "Clear Cache" button with FontAwesome trash icon (FR-13), subtle indicator when viewing cached results. Verify `page.test.tsx` passes (TDD Green)
 
 ## Completion
 
-- [ ] All vitest tests pass: `npx vitest run src/__tests__/useAnalysisCache.test.ts src/__tests__/page.test.tsx`
+- [ ] All vitest tests pass: `npx vitest run src/__tests__/useAnalysisCache.test.tsx src/__tests__/page.test.tsx`
 - [ ] After analysis, headers and results are saved to localStorage
 - [ ] Page refresh restores the previous analysis (headers in input, report rendered)
 - [ ] "Clear Cache" button removes all stored data and resets the view to empty state
