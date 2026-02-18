@@ -96,11 +96,8 @@ afterEach(() => {
 describe("AnalysisControls", () => {
   it("renders toggles with default off state", async () => {
     setupFetchMock(sampleTests);
-    const config: AnalysisConfig = { testIds: [], resolve: false, decodeAll: false };
 
-    const { container } = render(
-      <AnalysisControls config={config} onChange={() => undefined} />,
-    );
+    const { container } = render(<AnalysisControls onChange={() => undefined} />);
 
     await act(async () => {
       await flushPromises();

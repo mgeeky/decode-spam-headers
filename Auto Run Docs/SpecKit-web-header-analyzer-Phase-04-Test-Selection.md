@@ -34,7 +34,7 @@ This phase implements the test selection panel and analysis configuration contro
 - [x] Test selector renders all 106+ tests with checkboxes
 - [x] Select All / Deselect All buttons work correctly
 - [x] Search/filter narrows visible tests by name
-- [ ] DNS resolution toggle defaults to off
+- [x] DNS resolution toggle defaults to off
 - [ ] Decode-all toggle is functional
 - [ ] All controls are keyboard accessible (Tab, Enter, Space)
 - [ ] Linting passes (`ruff check backend/`, `npx eslint src/`)

@@ -13,8 +13,14 @@ import type { AnalysisConfig } from "../types/analysis";
 import TestSelector from "./TestSelector";
 
 type AnalysisControlsProps = {
-  config: AnalysisConfig;
+  config?: AnalysisConfig;
   onChange: (next: AnalysisConfig) => void;
+};
+
+const defaultConfig: AnalysisConfig = {
+  testIds: [],
+  resolve: false,
+  decodeAll: false,
 };
 
 const handleToggleKeyDown = (
@@ -27,7 +33,10 @@ const handleToggleKeyDown = (
   }
 };
 
-export default function AnalysisControls({ config, onChange }: AnalysisControlsProps) {
+export default function AnalysisControls({
+  config = defaultConfig,
+  onChange,
+}: AnalysisControlsProps) {
   const updateTests = (nextTestIds: number[]) => {
     onChange({ ...config, testIds: nextTestIds });
   };
