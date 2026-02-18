@@ -164,6 +164,43 @@ describe("TestSelector", () => {
     });
   });
 
+  it("supports keyboard activation for select and deselect", async () => {
+    setupFetchMock(sampleTests);
+
+    const TestSelectorHarness = () => {
+      const [selected, setSelected] = useState<number[]>([]);
+      return <TestSelector selectedTestIds={selected} onSelectionChange={setSelected} />;
+    };
+
+    const { container } = render(<TestSelectorHarness />);
+
+    await act(async () => {
+      await flushPromises();
+    });
+
+    const selectAllButton = getSelectAllButton(container);
+    act(() => {
+      selectAllButton.dispatchEvent(
+        new KeyboardEvent("keydown", { key: "Enter", bubbles: true }),
+      );
+    });
+
+    sampleTests.forEach((test) => {
+      expect(getCheckbox(container, test.id).checked).toBe(true);
+    });
+
+    const deselectAllButton = getDeselectAllButton(container);
+    act(() => {
+      deselectAllButton.dispatchEvent(
+        new KeyboardEvent("keydown", { key: " ", bubbles: true }),
+      );
+    });
+
+    sampleTests.forEach((test) => {
+      expect(getCheckbox(container, test.id).checked).toBe(false);
+    });
+  });
+
   it("filters tests by search text", async () => {
     setupFetchMock(sampleTests);
 

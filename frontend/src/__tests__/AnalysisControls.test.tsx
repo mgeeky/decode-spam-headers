@@ -178,4 +178,42 @@ describe("AnalysisControls", () => {
       expect.objectContaining({ resolve: true, decodeAll: true }),
     );
   });
+
+  it("updates toggles on Space key presses", async () => {
+    setupFetchMock(sampleTests);
+    const handleChange = vi.fn();
+
+    const AnalysisControlsHarness = () => {
+      const [config, setConfig] = useState<AnalysisConfig>({
+        testIds: [],
+        resolve: false,
+        decodeAll: false,
+      });
+
+      const updateConfig = (next: AnalysisConfig) => {
+        setConfig(next);
+        handleChange(next);
+      };
+
+      return <AnalysisControls config={config} onChange={updateConfig} />;
+    };
+
+    const { container } = render(<AnalysisControlsHarness />);
+
+    await act(async () => {
+      await flushPromises();
+    });
+
+    const resolveToggle = getToggle(container, "toggle-resolve");
+    act(() => {
+      resolveToggle.dispatchEvent(
+        new KeyboardEvent("keydown", { key: " ", bubbles: true }),
+      );
+    });
+
+    expect(resolveToggle.getAttribute("aria-checked")).toBe("true");
+    expect(handleChange).toHaveBeenLastCalledWith(
+      expect.objectContaining({ resolve: true }),
+    );
+  });
 });

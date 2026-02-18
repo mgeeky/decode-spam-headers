@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useState, type KeyboardEvent } from "react";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import {
   faCheck,
@@ -44,6 +44,16 @@ const buildGroups = (tests: TestInfo[]): TestGroup[] => {
     category,
     tests: groupedTests,
   }));
+};
+
+const handleActionKeyDown = (
+  event: KeyboardEvent<HTMLButtonElement>,
+  onAction: () => void,
+): void => {
+  if (event.key === "Enter" || event.key === " " || event.key === "Spacebar") {
+    event.preventDefault();
+    onAction();
+  }
 };
 
 export default function TestSelector({ selectedTestIds, onSelectionChange }: TestSelectorProps) {
@@ -152,6 +162,7 @@ export default function TestSelector({ selectedTestIds, onSelectionChange }: Tes
               type="button"
               className="inline-flex items-center gap-2 rounded-full border border-info/20 bg-background/40 px-4 py-2 text-xs font-semibold uppercase tracking-[0.2em] text-text/70 transition hover:border-info/40 hover:text-text focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-info"
               onClick={handleSelectAll}
+              onKeyDown={(event) => handleActionKeyDown(event, handleSelectAll)}
               data-testid="select-all-tests"
             >
               <FontAwesomeIcon icon={faCheck} className="text-xs" />
@@ -161,6 +172,7 @@ export default function TestSelector({ selectedTestIds, onSelectionChange }: Tes
               type="button"
               className="inline-flex items-center gap-2 rounded-full border border-info/20 bg-background/40 px-4 py-2 text-xs font-semibold uppercase tracking-[0.2em] text-text/70 transition hover:border-info/40 hover:text-text focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-info"
               onClick={handleDeselectAll}
+              onKeyDown={(event) => handleActionKeyDown(event, handleDeselectAll)}
               data-testid="deselect-all-tests"
             >
               <FontAwesomeIcon icon={faXmark} className="text-xs" />
