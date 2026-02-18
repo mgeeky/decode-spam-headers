@@ -25,6 +25,11 @@ test("paste headers and analyse renders progress and report", async ({ page }) =
   const progressIndicator = page.getByTestId("progress-indicator");
   await expect(progressIndicator).toBeVisible({ timeout: 30000 });
 
+  const progressPercentage = progressIndicator.getByTestId("progress-percentage");
+  await expect(progressPercentage).toBeVisible();
+  const initialPercentage = parsePercentage(await progressPercentage.textContent());
+  expect(initialPercentage).toBeGreaterThanOrEqual(0);
+
   const currentTest = page.getByTestId("progress-current-test");
   await expect(currentTest).toBeVisible();
   await expect(currentTest).not.toHaveText(/^\s*$/);
@@ -32,7 +37,11 @@ test("paste headers and analyse renders progress and report", async ({ page }) =
 
   const firstTestName = (await currentTest.textContent())?.trim() ?? "";
   await page.waitForFunction(
-    ({ testId, previous }) => {
+    ({ testId, previous, reportId }) => {
+      const report = document.querySelector(`[data-testid="${reportId}"]`);
+      if (report) {
+        return true;
+      }
       const node = document.querySelector(`[data-testid="${testId}"]`);
       if (!node) {
         return false;
@@ -40,12 +49,8 @@ test("paste headers and analyse renders progress and report", async ({ page }) =
       const nextValue = (node.textContent ?? "").trim();
       return nextValue.length > 0 && nextValue !== previous;
     },
-    { testId: "progress-current-test", previous: firstTestName },
+    { testId: "progress-current-test", previous: firstTestName, reportId: "report-container" },
   );
-
-  const progressPercentage = page.getByTestId("progress-percentage");
-  const initialPercentage = parsePercentage(await progressPercentage.textContent());
-  expect(initialPercentage).toBeGreaterThanOrEqual(0);
 
   await analyzer.waitForResults();
 
