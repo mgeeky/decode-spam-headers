@@ -4,6 +4,7 @@ from app.core.config import get_settings
 from app.middleware.rate_limiter import RateLimiterMiddleware, SlidingWindowRateLimiter
 from app.routers.analysis import router as analysis_router
 from app.routers.captcha import router as captcha_router
+from app.routers.health import router as health_router
 from app.routers.tests import router as tests_router
 
 app = FastAPI(title="Web Header Analyzer API")
@@ -16,6 +17,7 @@ app.add_middleware(
 )
 app.include_router(analysis_router)
 app.include_router(captcha_router)
+app.include_router(health_router)
 app.include_router(tests_router)
 
 
