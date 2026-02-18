@@ -38,6 +38,6 @@ This phase implements the test selection panel and analysis configuration contro
 - [x] Decode-all toggle is functional
 - [x] All controls are keyboard accessible (Tab, Enter, Space)
 - [x] Linting passes (`ruff check backend/`, `npx eslint src/`)
-- [ ] Run `/speckit.analyze` to verify consistency (attempted on 2026-02-18 in PowerShell; command not available in this environment, `/speckit.analyze` not recognized; re-attempted on 2026-02-18 in PowerShell during Auto Run iteration 00001 with the same "not recognized" error)
+- [ ] Run `/speckit.analyze` to verify consistency (attempted on 2026-02-18 in PowerShell; command not available in this environment, `/speckit.analyze` not recognized; re-attempted on 2026-02-18 in PowerShell during Auto Run iteration 00001 with the same "not recognized" error; re-attempted on 2026-02-18 in PowerShell during Auto Run iteration 00001 again and received the same "not recognized" error)
 
 Note: Verified Select All/Deselect All behavior via `TestSelector.test.tsx` ("selects and deselects all tests") on 2026-02-18.
