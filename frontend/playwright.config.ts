@@ -14,6 +14,7 @@ import path from 'path';
  */
 export default defineConfig({
   testDir: './e2e',
+  snapshotDir: './e2e/__snapshots__',
   /* Run tests in files in parallel */
   fullyParallel: true,
   /* Fail the build on CI if you accidentally left test.only in the source code. */
