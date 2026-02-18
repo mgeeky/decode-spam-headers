@@ -22,9 +22,13 @@ async def test_get_tests_returns_all_registered_tests() -> None:
     assert response.status_code == 200
 
     payload = response.json()
-    assert isinstance(payload, list)
-    assert len(payload) == len(expected_lookup)
+    assert isinstance(payload, dict)
+    assert payload["totalCount"] == len(expected_lookup)
 
-    response_lookup = {item["id"]: item["name"] for item in payload}
+    tests_payload = payload["tests"]
+    assert isinstance(tests_payload, list)
+    assert len(tests_payload) == len(expected_lookup)
+
+    response_lookup = {item["id"]: item["name"] for item in tests_payload}
     assert len(response_lookup) == len(expected_lookup)
     assert response_lookup == expected_lookup
