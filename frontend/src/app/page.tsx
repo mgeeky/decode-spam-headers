@@ -1,41 +1,35 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useState } from "react";
 
 import AnalyseButton from "../components/AnalyseButton";
 import FileDropZone from "../components/FileDropZone";
 import HeaderInput from "../components/HeaderInput";
+import useAnalysis from "../hooks/useAnalysis";
 import { MAX_HEADER_INPUT_BYTES } from "../lib/header-validation";
+import type { AnalysisConfig } from "../types/analysis";
+
+const defaultConfig: AnalysisConfig = {
+  testIds: [],
+  resolve: false,
+  decodeAll: false,
+};
 
 export default function Home() {
   const [headerInput, setHeaderInput] = useState("");
-  const [isAnalyzing, setIsAnalyzing] = useState(false);
+  const { status, submit } = useAnalysis();
   const hasHeaderInput = headerInput.trim().length > 0;
   const isOversized = headerInput.length > MAX_HEADER_INPUT_BYTES;
   const canAnalyse = hasHeaderInput && !isOversized;
-  const analyseTimeoutRef = useRef<number | null>(null);
+  const isLoading = status === "submitting" || status === "analysing";
 
-  useEffect(() => {
-    return () => {
-      if (analyseTimeoutRef.current !== null) {
-        window.clearTimeout(analyseTimeoutRef.current);
-      }
-    };
-  }, []);
-
-  const handleAnalyse = () => {
+  const handleAnalyse = useCallback(() => {
     if (!canAnalyse) {
       return;
     }
 
-    setIsAnalyzing(true);
-    if (analyseTimeoutRef.current !== null) {
-      window.clearTimeout(analyseTimeoutRef.current);
-    }
-    analyseTimeoutRef.current = window.setTimeout(() => {
-      setIsAnalyzing(false);
-    }, 800);
-  };
+    void submit({ headers: headerInput, config: defaultConfig });
+  }, [canAnalyse, headerInput, submit]);
 
   return (
     <main className="min-h-screen bg-background text-text">
@@ -70,7 +64,7 @@ export default function Home() {
                   <AnalyseButton
                     hasInput={canAnalyse}
                     onAnalyse={handleAnalyse}
-                    isLoading={isAnalyzing}
+                    isLoading={isLoading}
                   />
                   <div className="flex items-center gap-2 text-xs text-text/60">
                     <kbd className="rounded-md border border-info/30 bg-background/40 px-2 py-1 font-mono">
