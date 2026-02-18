@@ -44,6 +44,7 @@ export default function CaptchaChallenge({
   const titleId = useId();
   const inputRef = useRef<HTMLInputElement | null>(null);
   const answerRef = useRef("");
+  const modalRef = useRef<HTMLDivElement | null>(null);
 
   useLayoutEffect(() => {
     if (!isOpen) {
@@ -53,6 +54,13 @@ export default function CaptchaChallenge({
     setError(null);
     setIsSubmitting(false);
     answerRef.current = "";
+  }, [isOpen, challenge?.challengeToken]);
+
+  useLayoutEffect(() => {
+    if (!isOpen) {
+      return;
+    }
+    inputRef.current?.focus();
   }, [isOpen, challenge?.challengeToken]);
 
   const commitAnswer = useCallback((value: string) => {
@@ -88,6 +96,43 @@ export default function CaptchaChallenge({
       if (event.key === "Escape") {
         event.preventDefault();
         onClose();
+        return;
+      }
+
+      if (event.key !== "Tab") {
+        return;
+      }
+      const container = modalRef.current;
+      if (!container) {
+        return;
+      }
+      const focusableElements = Array.from(
+        container.querySelectorAll<HTMLElement>(
+          'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])',
+        ),
+      ).filter(
+        (element) =>
+          !element.hasAttribute("disabled") &&
+          element.getAttribute("aria-hidden") !== "true",
+      );
+
+      if (focusableElements.length === 0) {
+        return;
+      }
+
+      const firstElement = focusableElements[0];
+      const lastElement = focusableElements[focusableElements.length - 1];
+      const activeElement = document.activeElement;
+
+      if (event.shiftKey && activeElement === firstElement) {
+        event.preventDefault();
+        lastElement.focus();
+        return;
+      }
+
+      if (!event.shiftKey && activeElement === lastElement) {
+        event.preventDefault();
+        firstElement.focus();
       }
     },
     [onClose],
@@ -117,6 +162,7 @@ export default function CaptchaChallenge({
         data-testid="captcha-challenge"
         onKeyDown={handleKeyDown}
         tabIndex={-1}
+        ref={modalRef}
       >
         <div className="flex items-center justify-between gap-4">
           <div className="flex items-center gap-3">

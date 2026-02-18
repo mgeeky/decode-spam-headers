@@ -194,4 +194,40 @@ describe("CaptchaChallenge", () => {
 
     expect(onClose).toHaveBeenCalled();
   });
+
+  it("keeps focus trapped within the modal when tabbing", () => {
+    const { container } = render(
+      <CaptchaChallenge
+        isOpen
+        challenge={sampleChallenge}
+        onVerify={vi.fn()}
+        onSuccess={vi.fn()}
+        onRetry={vi.fn()}
+        onClose={vi.fn()}
+      />,
+    );
+
+    const closeButton = getByTestId(container, "captcha-close") as HTMLButtonElement;
+    const submit = getByTestId(container, "captcha-submit") as HTMLButtonElement;
+
+    submit.focus();
+    expect(document.activeElement).toBe(submit);
+
+    act(() => {
+      submit.dispatchEvent(new KeyboardEvent("keydown", { key: "Tab", bubbles: true }));
+    });
+
+    expect(document.activeElement).toBe(closeButton);
+
+    closeButton.focus();
+    expect(document.activeElement).toBe(closeButton);
+
+    act(() => {
+      closeButton.dispatchEvent(
+        new KeyboardEvent("keydown", { key: "Tab", shiftKey: true, bubbles: true }),
+      );
+    });
+
+    expect(document.activeElement).toBe(submit);
+  });
 });
