@@ -35,7 +35,7 @@ This phase performs final integration, accessibility audit, responsive testing, 
 - [x] Rate limiting flow works: exceed limit → CAPTCHA modal → solve → retry succeeds. Notes: added Playwright rate limiting flow spec that mocks 429 response + CAPTCHA verify, asserts retry includes bypass token and succeeds; ran `npx playwright test e2e/rate-limiting.spec.ts --project=chromium`.
 - [x] `pytest backend/tests/` passes with ≥80% coverage on new modules. Notes: ran `pytest backend/tests/ --cov=backend/app --cov-report=term` (total backend/app coverage 82%).
 - [x] `npx vitest run --coverage` passes with ≥80% coverage on new components. Notes: ran in `frontend/` (overall coverage 83.48%); warnings emitted about `--localstorage-file` missing a valid path.
-- [ ] `ruff check backend/` — zero errors
+- [x] `ruff check backend/` — zero errors. Notes: ran `ruff check backend/` (all checks passed).
 - [ ] `npx eslint src/` — zero errors
 - [ ] `npx prettier --check src/` — zero errors
 - [ ] No `any` types in TypeScript
