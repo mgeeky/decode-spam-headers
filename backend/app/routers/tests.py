@@ -12,4 +12,4 @@ router = APIRouter(prefix="/api", tags=["tests"])
 def list_tests() -> list[TestResponse]:
     registry = ScannerRegistry()
     tests = registry.list_tests()
-    return [TestResponse.model_validate(test) for test in tests]
+    return [TestResponse.model_validate(test.model_dump()) for test in tests]

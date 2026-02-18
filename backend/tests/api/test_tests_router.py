@@ -7,7 +7,7 @@ from app.engine.scanner_registry import ScannerRegistry
 from app.main import app
 
 
-@pytest.mark.asyncio
+@pytest.mark.anyio
 async def test_get_tests_returns_all_registered_tests() -> None:
     registry = ScannerRegistry()
     expected = registry.list_tests()
