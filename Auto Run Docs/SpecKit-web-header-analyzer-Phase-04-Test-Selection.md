@@ -29,7 +29,7 @@ This phase implements the test selection panel and analysis configuration contro
 ## Completion
 
 - [x] `pytest backend/tests/api/test_tests_router.py` passes
-- [ ] `GET /api/tests` returns all 106+ tests with id, name, and category
+- [x] `GET /api/tests` returns all 106+ tests with id, name, and category
 - [x] All vitest tests pass: `npx vitest run src/__tests__/TestSelector.test.tsx src/__tests__/AnalysisControls.test.tsx`
 - [ ] Test selector renders all 106+ tests with checkboxes
 - [ ] Select All / Deselect All buttons work correctly
