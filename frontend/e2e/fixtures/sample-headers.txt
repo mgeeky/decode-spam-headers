@@ -1,0 +1,34 @@
+Received: from mail.example.org (mail.example.org [203.0.113.10])
+    by mx.example.com with ESMTPS id 12345
+    for <user@example.com>; Tue, 17 Feb 2026 10:00:00 +0000
+Received: from localhost (localhost [127.0.0.1])
+    by mail.example.org with SMTP id 67890
+    for <user@example.com>; Tue, 17 Feb 2026 09:59:00 +0000
+Authentication-Results: mx.example.com;
+    spf=pass smtp.mailfrom=example.org;
+    dkim=pass header.d=example.org;
+    dmarc=pass
+Subject: This is a test subject
+    with a folded line
+From: "Sender Name" <sender@example.org>
+To: user@example.com
+Date: Tue, 17 Feb 2026 10:00:00 +0000
+Message-ID: <1234@example.org>
+Content-Type: multipart/alternative; boundary="boundary-123"
+X-Forefront-Antispam-Report: CIP:203.0.113.10;CTRY:US;LANG:en;SCL:1;SRV:;
+    IPV:NLI;SFV:SKI;H:mail.example.org;CAT:NONE;SFTY:0.0;SFS:(0);DIR:INB;
+X-Spam-Status: No, score=-0.1 required=5.0 tests=NONE
+X-Spam-Level: **
+X-Spam-Flag: NO
+X-Spam-Report: Example report line one
+    Example report line two
+X-Mimecast-Spam-Score: 1
+X-Proofpoint-Spam-Details: rule=default, score=0
+X-MS-Exchange-Organization-SCL: 1
+
+--boundary-123
+Content-Type: text/plain; charset=utf-8
+
+This is the body.
+X-Should-Not-Be-Parsed: nope
+--boundary-123--
