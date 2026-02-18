@@ -136,7 +136,7 @@ describe("ReportExport", () => {
     expect(createObjectUrlSpy).toHaveBeenCalled();
     expect(clickSpy).toHaveBeenCalled();
     expect(lastBlob).not.toBeNull();
-    expect(lastBlob?.type).toBe("application/json");
+    expect(lastBlob?.type).toBe("application/json;charset=utf-8");
 
     const text = await lastBlob?.text();
     const parsed = JSON.parse(text ?? "{}") as AnalysisReport;
@@ -144,7 +144,7 @@ describe("ReportExport", () => {
     expect(parsed.results[0]?.testId).toBe(101);
   });
 
-  it("triggers an HTML download", () => {
+  it("triggers an HTML download with styled markup", async () => {
     const { container } = render(<ReportExport report={report} />);
 
     const htmlButton = getByTestId(container, "report-export-html");
@@ -155,5 +155,13 @@ describe("ReportExport", () => {
 
     expect(createObjectUrlSpy).toHaveBeenCalled();
     expect(clickSpy).toHaveBeenCalled();
+    expect(lastBlob?.type).toBe("text/html;charset=utf-8");
+
+    const text = await lastBlob?.text();
+    expect(text).toContain("<!doctype html>");
+    expect(text).toContain("<style>");
+    expect(text).toContain("Email Header Analysis Report");
+    expect(text).toContain("Summary");
+    expect(text).toContain("SpamAssassin Rule Hits");
   });
 });

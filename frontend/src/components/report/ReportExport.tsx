@@ -147,6 +147,7 @@ const buildHtmlReport = (report: AnalysisReport): string => {
         background: var(--background);
         color: var(--text);
         font-family: "Geist", "Segoe UI", system-ui, sans-serif;
+        line-height: 1.5;
       }
 
       main {
@@ -160,6 +161,11 @@ const buildHtmlReport = (report: AnalysisReport): string => {
       h1 {
         font-size: 26px;
         margin: 0 0 4px;
+      }
+
+      h2 {
+        font-size: 18px;
+        margin: 0 0 12px;
       }
 
       .muted {
@@ -427,16 +433,20 @@ const downloadBlob = (content: string, mimeType: string, fileName: string) => {
   document.body.appendChild(anchor);
   anchor.click();
   anchor.remove();
-  URL.revokeObjectURL(url);
+  window.setTimeout(() => URL.revokeObjectURL(url), 1000);
 };
 
 export default function ReportExport({ report }: ReportExportProps) {
   const handleJsonExport = () => {
-    downloadBlob(JSON.stringify(report, null, 2), "application/json", "analysis-report.json");
+    downloadBlob(
+      JSON.stringify(report, null, 2),
+      "application/json;charset=utf-8",
+      "analysis-report.json",
+    );
   };
 
   const handleHtmlExport = () => {
-    downloadBlob(buildHtmlReport(report), "text/html", "analysis-report.html");
+    downloadBlob(buildHtmlReport(report), "text/html;charset=utf-8", "analysis-report.html");
   };
 
   return (
