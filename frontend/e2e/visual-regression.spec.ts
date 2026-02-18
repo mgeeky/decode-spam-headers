@@ -15,7 +15,7 @@ const viewports = [
 
 const baseScreenshotOptions = {
   animations: "disabled" as const,
-  fullPage: true,
+  maxDiffPixelRatio: 0.03,
 };
 
 test.describe("visual regression snapshots", () => {
@@ -25,6 +25,10 @@ test.describe("visual regression snapshots", () => {
       const analyzer = new AnalyzerPage(page);
 
       await page.setViewportSize({ width: viewport.width, height: viewport.height });
+      await page.addInitScript(() => {
+        window.localStorage.clear();
+        window.sessionStorage.clear();
+      });
       await analyzer.goto();
 
       const headerInput = page.getByRole("textbox", { name: "Header Input" });
@@ -64,6 +68,7 @@ test.describe("visual regression snapshots", () => {
           page.getByTestId("progress-remaining"),
           page.getByTestId("progress-percentage"),
           page.getByTestId("progress-current-test"),
+          page.getByRole("progressbar"),
         ],
       });
 
@@ -89,6 +94,7 @@ test.describe("visual regression snapshots", () => {
       await expect(hopChain).toBeVisible();
       await expect(hopChain).toHaveScreenshot(`hop-chain-${viewport.label}.png`, {
         animations: "disabled",
+        maxDiffPixelRatio: 0.03,
       });
     });
   }

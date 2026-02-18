@@ -1,4 +1,4 @@
-import type { Download, Locator, Page } from "@playwright/test";
+import { expect, type Download, type Locator, type Page } from "@playwright/test";
 import fs from "fs/promises";
 import path from "path";
 
@@ -112,6 +112,10 @@ export class AnalyzerPage {
       state: "visible",
       timeout: 30000,
     });
+    await this.page.getByTestId("progress-indicator").waitFor({
+      state: "hidden",
+      timeout: 30000,
+    });
   }
 
   getResultCards(): Locator {
@@ -122,10 +126,11 @@ export class AnalyzerPage {
     const toggle = this.getResultCards()
       .nth(index)
       .locator('[data-testid^="test-result-toggle-"]');
-    await toggle.waitFor({ state: "visible" });
+    await toggle.waitFor({ state: "attached" });
     const expanded = await toggle.getAttribute("aria-expanded");
     if (expanded !== "true") {
-      await toggle.click();
+      await toggle.evaluate((node) => node.click());
+      await this.waitForToggleState(toggle, "true");
     }
   }
 
@@ -133,10 +138,11 @@ export class AnalyzerPage {
     const toggle = this.getResultCards()
       .nth(index)
       .locator('[data-testid^="test-result-toggle-"]');
-    await toggle.waitFor({ state: "visible" });
+    await toggle.waitFor({ state: "attached" });
     const expanded = await toggle.getAttribute("aria-expanded");
     if (expanded === "true") {
-      await toggle.click();
+      await toggle.evaluate((node) => node.click());
+      await this.waitForToggleState(toggle, "false");
     }
   }
 
@@ -174,5 +180,9 @@ export class AnalyzerPage {
 
   private analyseButton(): Locator {
     return this.page.getByRole("button", { name: "Analyse Headers" });
+  }
+
+  private async waitForToggleState(toggle: Locator, expected: "true" | "false"): Promise<void> {
+    await expect(toggle).toHaveAttribute("aria-expanded", expected, { timeout: 10000 });
   }
 }

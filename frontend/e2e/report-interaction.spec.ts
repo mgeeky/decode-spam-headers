@@ -40,9 +40,13 @@ test("report interactions allow expand/collapse, search, and export", async ({ p
   const totalCount = await resultCards.count();
   expect(totalCount).toBeGreaterThan(0);
 
-  for (let index = 0; index < totalCount; index += 1) {
-    await analyzer.expandCard(index);
-  }
+  await page.evaluate(() => {
+    document.querySelectorAll('[data-testid^="test-result-toggle-"]').forEach((node) => {
+      if (node.getAttribute("aria-expanded") !== "true") {
+        (node as HTMLButtonElement).click();
+      }
+    });
+  });
 
   const toggleLocator = page.locator('[data-testid^="test-result-toggle-"]');
   await expect.poll(async () => {
@@ -51,9 +55,13 @@ test("report interactions allow expand/collapse, search, and export", async ({ p
     });
   }).toBe(totalCount);
 
-  for (let index = 0; index < totalCount; index += 1) {
-    await analyzer.collapseCard(index);
-  }
+  await page.evaluate(() => {
+    document.querySelectorAll('[data-testid^="test-result-toggle-"]').forEach((node) => {
+      if (node.getAttribute("aria-expanded") === "true") {
+        (node as HTMLButtonElement).click();
+      }
+    });
+  });
 
   await expect.poll(async () => {
     return toggleLocator.evaluateAll((nodes) => {

@@ -27,6 +27,8 @@ export interface AnalysisSubmitOptions {
   bypassToken?: string;
 }
 
+const MIN_PROGRESS_DISPLAY_MS = 500;
+
 const scheduleTask = (handler: () => void): void => {
   setTimeout(handler, 0);
 };
@@ -43,6 +45,7 @@ const useAnalysis = (): UseAnalysisState => {
   const inFlightRef = useRef(false);
   const mountedRef = useRef(true);
   const hasProgressRef = useRef(false);
+  const progressStartRef = useRef<number | null>(null);
 
   useEffect(() => {
     return () => {
@@ -83,6 +86,7 @@ const useAnalysis = (): UseAnalysisState => {
           const payload = event.data as AnalysisProgress;
           if (!hasProgressRef.current) {
             hasProgressRef.current = true;
+            progressStartRef.current = Date.now();
             flushSync(() => {
               setProgress(payload);
               setStatus("analysing");
@@ -95,9 +99,32 @@ const useAnalysis = (): UseAnalysisState => {
 
         if (event.event === "result") {
           const report = event.data as AnalysisReport;
-          setResult(report);
-          inFlightRef.current = false;
-          setStatus(report.metadata.timedOut ? "timeout" : "complete");
+          const finalize = () => {
+            if (!mountedRef.current) {
+              return;
+            }
+            if (!inFlightRef.current || requestIdRef.current !== requestId) {
+              return;
+            }
+            if (signal.aborted) {
+              return;
+            }
+            setResult(report);
+            inFlightRef.current = false;
+            setStatus(report.metadata.timedOut ? "timeout" : "complete");
+          };
+
+          const progressStart = progressStartRef.current;
+          if (progressStart) {
+            const elapsed = Date.now() - progressStart;
+            const remaining = Math.max(0, MIN_PROGRESS_DISPLAY_MS - elapsed);
+            if (remaining > 0) {
+              setTimeout(finalize, remaining);
+              return;
+            }
+          }
+
+          finalize();
         }
       });
     },
@@ -117,6 +144,7 @@ const useAnalysis = (): UseAnalysisState => {
       setStatus("submitting");
       resetState();
       hasProgressRef.current = false;
+      progressStartRef.current = null;
 
       try {
         const headers = options.bypassToken
