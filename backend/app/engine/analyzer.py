@@ -16,7 +16,7 @@ from .models import (
 from .parser import HeaderParser, ParsedHeader
 from .scanner_base import BaseScanner
 from .scanner_registry import ScannerRegistry
-from .scanners._legacy_adapter import configure_legacy
+from .scanners._legacy_adapter import configure_legacy, reset_legacy_context
 
 ProgressCallback = Callable[[int, int, str], None]
 
@@ -42,6 +42,7 @@ class HeaderAnalyzer:
         progress_callback: ProgressCallback | None = None,
     ) -> AnalysisResult:
         start = perf_counter()
+        reset_legacy_context()
         configure_legacy(
             resolve=request.config.resolve,
             decode_all=request.config.decode_all,

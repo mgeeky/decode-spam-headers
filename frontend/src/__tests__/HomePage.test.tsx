@@ -152,7 +152,7 @@ describe("Home page", () => {
     expect(timeoutTests?.textContent ?? "").toMatch(/Mimecast Fingerprint/);
     expect(timeoutTests?.textContent ?? "").toMatch(/Proofpoint TAP/);
 
-    const results = container.querySelector('[data-testid="analysis-results"]');
+    const results = container.querySelector('[data-testid="report-container"]');
     expect(results).not.toBeNull();
   });
 

@@ -33,6 +33,13 @@ def configure_legacy(
     _LEGACY_CONFIG["include_unusual"] = bool(include_unusual)
 
 
+def reset_legacy_context() -> None:
+    global _CONTEXT_SIGNATURE, _CONTEXT_CONFIG, _CONTEXT_ANALYSIS
+    _CONTEXT_SIGNATURE = None
+    _CONTEXT_CONFIG = None
+    _CONTEXT_ANALYSIS = None
+
+
 def _load_legacy_module() -> object:
     global _LEGACY_MODULE
     if _LEGACY_MODULE is not None:
