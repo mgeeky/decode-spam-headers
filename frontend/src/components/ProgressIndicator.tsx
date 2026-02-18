@@ -63,24 +63,15 @@ export default function ProgressIndicator({
   timeoutSeconds,
   incompleteTests = [],
 }: ProgressIndicatorProps) {
-  const [nowMs, setNowMs] = useState(() => Date.now());
+  const [elapsedMs, setElapsedMs] = useState(() => progress?.elapsedMs ?? 0);
+  const progressRef = useRef<AnalysisProgress | null>(progress);
+  const statusRef = useRef<AnalysisStatus>(status);
   const anchorRef = useRef<{ elapsedMs: number; timestamp: number } | null>(null);
 
   useEffect(() => {
-    if (status !== "analysing") {
-      return;
-    }
+    progressRef.current = progress;
+    statusRef.current = status;
 
-    const interval = window.setInterval(() => {
-      setNowMs(Date.now());
-    }, 1000);
-
-    return () => {
-      window.clearInterval(interval);
-    };
-  }, [status]);
-
-  useEffect(() => {
     if (!progress || status !== "analysing") {
       anchorRef.current = null;
       return;
@@ -90,14 +81,28 @@ export default function ProgressIndicator({
       elapsedMs: progress.elapsedMs,
       timestamp: Date.now(),
     };
-  }, [progress?.elapsedMs, status]);
+  }, [progress, status]);
 
-  const baseElapsedMs = progress?.elapsedMs ?? 0;
-  const anchor = anchorRef.current;
-  const elapsedMs =
-    status === "analysing" && progress && anchor
-      ? anchor.elapsedMs + Math.max(0, nowMs - anchor.timestamp)
-      : baseElapsedMs;
+  useEffect(() => {
+    const interval = window.setInterval(() => {
+      const currentStatus = statusRef.current;
+      const currentProgress = progressRef.current;
+      const anchor = anchorRef.current;
+      const baseElapsedMs = currentProgress?.elapsedMs ?? 0;
+      const nextElapsedMs =
+        currentStatus === "analysing" && currentProgress && anchor
+          ? anchor.elapsedMs + Math.max(0, Date.now() - anchor.timestamp)
+          : baseElapsedMs;
+
+      setElapsedMs((previous) =>
+        previous === nextElapsedMs ? previous : nextElapsedMs,
+      );
+    }, 1000);
+
+    return () => {
+      window.clearInterval(interval);
+    };
+  }, []);
   const elapsedSeconds = Math.floor(elapsedMs / 1000);
   const remainingSeconds = Math.max(0, timeoutSeconds - elapsedSeconds);
   const percentage = progress ? Math.round(progress.percentage) : 0;

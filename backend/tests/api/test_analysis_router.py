@@ -8,7 +8,13 @@ import pytest
 from httpx import ASGITransport, AsyncClient
 
 from app.engine.analyzer import HeaderAnalyzer
-from app.engine.models import AnalysisResult, ReportMetadata, Severity, TestResult, TestStatus
+from app.engine.models import (
+    AnalysisResult,
+    ReportMetadata,
+    Severity,
+    TestResult,
+    TestStatus,
+)
 from app.main import app
 
 FIXTURES_DIR = Path(__file__).resolve().parents[1] / "fixtures"
@@ -44,7 +50,10 @@ def _parse_sse_events(raw: str) -> list[dict[str, Any]]:
     return events
 
 
-async def _collect_stream_events(client: AsyncClient, payload: dict[str, Any]) -> list[dict[str, Any]]:
+async def _collect_stream_events(
+    client: AsyncClient,
+    payload: dict[str, Any],
+) -> list[dict[str, Any]]:
     async with client.stream(
         "POST",
         "/api/analyse",
@@ -99,7 +108,10 @@ async def test_analyse_streams_progress_and_result() -> None:
 
 @pytest.mark.anyio
 async def test_analyse_rejects_empty_headers() -> None:
-    payload = {"headers": "", "config": {"testIds": [], "resolve": False, "decodeAll": False}}
+    payload = {
+        "headers": "",
+        "config": {"testIds": [], "resolve": False, "decodeAll": False},
+    }
 
     async with AsyncClient(
         transport=ASGITransport(app=app),
@@ -131,7 +143,9 @@ async def test_analyse_rejects_oversized_headers() -> None:
 
 
 @pytest.mark.anyio
-async def test_analyse_stream_includes_partial_failures(monkeypatch: pytest.MonkeyPatch) -> None:
+async def test_analyse_stream_includes_partial_failures(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
     raw_headers = (FIXTURES_DIR / "sample_headers.txt").read_text(encoding="utf-8")
 
     def fake_analyze(
@@ -191,17 +205,23 @@ async def test_analyse_stream_includes_partial_failures(monkeypatch: pytest.Monk
     ) as client:
         events = await _collect_stream_events(client, payload)
 
-    result_payload = next(event["data"] for event in events if event["event"] == "result")
+    result_payload = next(
+        event["data"] for event in events if event["event"] == "result"
+    )
     statuses = [item["status"] for item in result_payload["results"]]
     assert "error" in statuses
-    error_entries = [item for item in result_payload["results"] if item["status"] == "error"]
+    error_entries = [
+        item for item in result_payload["results"] if item["status"] == "error"
+    ]
     assert error_entries[0]["error"]
     assert result_payload["metadata"]["failedTests"] == 1
     assert result_payload["metadata"]["incompleteTests"] == ["Test B"]
 
 
 @pytest.mark.anyio
-async def test_analyse_times_out_with_partial_results(monkeypatch: pytest.MonkeyPatch) -> None:
+async def test_analyse_times_out_with_partial_results(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
     raw_headers = (FIXTURES_DIR / "sample_headers.txt").read_text(encoding="utf-8")
 
     def fake_analyze(
@@ -227,6 +247,8 @@ async def test_analyse_times_out_with_partial_results(monkeypatch: pytest.Monkey
     ) as client:
         events = await _collect_stream_events(client, payload)
 
-    result_payload = next(event["data"] for event in events if event["event"] == "result")
+    result_payload = next(
+        event["data"] for event in events if event["event"] == "result"
+    )
     assert result_payload["metadata"]["timedOut"] is True
     assert result_payload["metadata"]["incompleteTests"]

@@ -47,5 +47,5 @@ Frontend uses `fetch` with `ReadableStream` reader (not native `EventSource`, wh
 - [x] Partial failures show inline error indicators per FR-25 (Added AnalysisResults rendering with inline error badges.)
 - [x] Timeout at 30s displays partial results with notification listing incomplete tests
 - [x] Empty input returns 400, oversized >1MB returns 413
-- [ ] Linting passes on both sides
+- [x] Linting passes on both sides
 - [ ] Run `/speckit.analyze` to verify consistency
