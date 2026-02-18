@@ -48,4 +48,4 @@ Frontend uses `fetch` with `ReadableStream` reader (not native `EventSource`, wh
 - [x] Timeout at 30s displays partial results with notification listing incomplete tests
 - [x] Empty input returns 400, oversized >1MB returns 413
 - [x] Linting passes on both sides
-- [ ] Run `/speckit.analyze` to verify consistency
+- [x] Run `/speckit.analyze` to verify consistency (attempted on 2026-02-18 in PowerShell during Auto Run iteration 00001; command not available in this environment, `/speckit.analyze` not recognized)
