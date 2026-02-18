@@ -38,7 +38,7 @@ This phase performs final integration, accessibility audit, responsive testing, 
 - [x] `ruff check backend/` — zero errors. Notes: ran `ruff check backend/` (all checks passed).
 - [x] `npx eslint src/` — zero errors. Notes: ran `npx eslint src/` in `frontend/` with no issues.
 - [x] `npx prettier --check src/` — zero errors. Notes: ran `npx prettier --check src/` in `frontend/` (all matched files formatted).
-- [ ] No `any` types in TypeScript
+- [x] No `any` types in TypeScript
 - [ ] WCAG 2.1 AA compliant (ARIA labels, keyboard nav, contrast ratios)
 - [ ] Responsive at 320px, 768px, 1024px, 1440px, 2560px — no layout issues
 - [ ] Lighthouse score ≥90 on Slow 4G preset
