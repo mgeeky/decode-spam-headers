@@ -55,6 +55,6 @@ ReportContainer
 - [x] Search filters results in real-time across test name, header name, and analysis text
 - [x] Export JSON produces a valid JSON file containing all results
 - [x] Export HTML produces a styled standalone page viewable in any browser
-- [ ] All report components are keyboard accessible
+- [x] All report components are keyboard accessible
 - [ ] Linting passes (`npx eslint src/`, `npx prettier --check src/`)
 - [ ] Run `/speckit.analyze` to verify consistency

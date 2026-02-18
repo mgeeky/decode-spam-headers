@@ -104,7 +104,7 @@ export default function TestResultCard({ result, highlightQuery = "" }: TestResu
         aria-controls={detailsId}
         onClick={toggle}
         onKeyDown={handleKeyDown}
-        className="flex w-full items-center justify-between gap-4 text-left"
+        className="flex w-full items-center justify-between gap-4 text-left focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-info"
       >
         <div className="flex flex-col">
           <span className="text-sm font-semibold text-text/90">

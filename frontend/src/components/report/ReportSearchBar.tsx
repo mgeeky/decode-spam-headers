@@ -47,7 +47,7 @@ export default function ReportSearchBar({
             value={query}
             onInput={handleInput}
             onKeyDown={handleKeyDown}
-            className="flex-1 bg-transparent text-xs text-text/80 outline-none"
+            className="flex-1 bg-transparent text-xs text-text/80 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-info"
             placeholder="Search test names, headers, or analysis"
             data-testid="report-search-input"
             aria-label="Search report results"
