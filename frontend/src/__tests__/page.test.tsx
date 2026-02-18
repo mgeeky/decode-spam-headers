@@ -18,8 +18,10 @@ const { submitSpy, cancelSpy, useAnalysisState } = vi.hoisted(() => {
       progress: null,
       result: null,
       error: null,
+      captchaChallenge: null,
       submit: submitSpy,
       cancel: cancelSpy,
+      clearCaptchaChallenge: vi.fn(),
     },
   };
 });
@@ -118,6 +120,7 @@ const resetUseAnalysisState = (): void => {
   useAnalysisState.progress = null;
   useAnalysisState.result = null;
   useAnalysisState.error = null;
+  useAnalysisState.captchaChallenge = null;
 };
 
 beforeEach(() => {

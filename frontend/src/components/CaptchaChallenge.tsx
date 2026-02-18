@@ -4,15 +4,7 @@ import { useCallback, useId, useLayoutEffect, useRef, useState, type KeyboardEve
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faLock, faUnlock } from "@fortawesome/free-solid-svg-icons";
 
-export type CaptchaChallengeData = {
-  challengeToken: string;
-  imageBase64: string;
-};
-
-export type CaptchaVerifyPayload = {
-  challengeToken: string;
-  answer: string;
-};
+import type { CaptchaChallengeData, CaptchaVerifyPayload } from "../types/captcha";
 
 type CaptchaChallengeProps = {
   isOpen: boolean;

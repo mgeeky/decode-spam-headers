@@ -4,7 +4,7 @@ import { act } from "react-dom/test-utils";
 import { createRoot } from "react-dom/client";
 import { afterEach, describe, expect, it, vi } from "vitest";
 
-import { apiClient } from "../lib/api-client";
+import { ApiError, apiClient } from "../lib/api-client";
 import type { AnalysisConfig, AnalysisProgress, AnalysisReport } from "../types/analysis";
 import useAnalysis from "../hooks/useAnalysis";
 
@@ -105,7 +105,8 @@ const timeoutReport: AnalysisReport = {
 };
 
 const AnalysisHarness = ({ request, onStatusChange }: HarnessProps) => {
-  const { status, progress, result, error, submit, cancel } = useAnalysis();
+  const { status, progress, result, error, submit, cancel, captchaChallenge, clearCaptchaChallenge } =
+    useAnalysis();
 
   useEffect(() => {
     onStatusChange?.(status);
@@ -118,11 +119,15 @@ const AnalysisHarness = ({ request, onStatusChange }: HarnessProps) => {
       <span data-testid="percentage">{progress?.percentage ?? ""}</span>
       <span data-testid="result-total">{result?.metadata.totalTests ?? ""}</span>
       <span data-testid="error">{error ?? ""}</span>
+      <span data-testid="captcha-token">{captchaChallenge?.challengeToken ?? ""}</span>
       <button data-testid="submit" onClick={() => submit(request)}>
         Submit
       </button>
       <button data-testid="cancel" onClick={() => cancel()}>
         Cancel
+      </button>
+      <button data-testid="clear-captcha" onClick={() => clearCaptchaChallenge()}>
+        Clear Captcha
       </button>
     </div>
   );
@@ -259,5 +264,25 @@ describe("useAnalysis", () => {
 
     expect(abortSignal?.aborted).toBe(true);
     expect(statuses).toContain("idle");
+  });
+
+  it("captures captcha challenges on rate limit errors", async () => {
+    vi.spyOn(apiClient, "stream").mockRejectedValue(
+      new ApiError("Too many requests", 429, {
+        captchaChallenge: { challengeToken: "abc123", imageBase64: "image-data" },
+      }),
+    );
+
+    const { container } = render(<AnalysisHarness request={baseRequest} />);
+
+    act(() => {
+      getByTestId(container, "submit").dispatchEvent(new MouseEvent("click", { bubbles: true }));
+    });
+
+    await act(async () => {
+      await flushPromises();
+    });
+
+    expect(getByTestId(container, "captcha-token").textContent).toBe("abc123");
   });
 });

@@ -5,14 +5,18 @@ import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faTrash } from "@fortawesome/free-solid-svg-icons";
 
 import AnalyseButton from "../components/AnalyseButton";
+import AnalysisControls from "../components/AnalysisControls";
+import CaptchaChallenge from "../components/CaptchaChallenge";
 import FileDropZone from "../components/FileDropZone";
 import HeaderInput from "../components/HeaderInput";
 import ProgressIndicator from "../components/ProgressIndicator";
 import ReportContainer from "../components/report/ReportContainer";
 import useAnalysis from "../hooks/useAnalysis";
 import useAnalysisCache from "../hooks/useAnalysisCache";
+import { apiClient } from "../lib/api-client";
 import { MAX_HEADER_INPUT_BYTES } from "../lib/header-validation";
 import type { AnalysisConfig, AnalysisReport } from "../types/analysis";
+import type { CaptchaVerifyPayload, CaptchaVerifyResponse } from "../types/captcha";
 
 const defaultConfig: AnalysisConfig = {
   testIds: [],
@@ -21,7 +25,8 @@ const defaultConfig: AnalysisConfig = {
 };
 
 export default function Home() {
-  const { status, progress, result, submit, cancel } = useAnalysis();
+  const { status, progress, result, submit, cancel, captchaChallenge, clearCaptchaChallenge } =
+    useAnalysis();
   const { save, load, clear, isNearLimit } = useAnalysisCache();
   const initialCache = useMemo(() => load(), [load]);
   const [headerInput, setHeaderInput] = useState(() => initialCache?.headers ?? "");
@@ -36,6 +41,7 @@ export default function Home() {
   );
   const [isViewCleared, setIsViewCleared] = useState(false);
   const lastSubmissionRef = useRef<{ headers: string; config: AnalysisConfig } | null>(null);
+  const bypassTokenRef = useRef<string | null>(null);
 
   useEffect(() => {
     if (!result) {
@@ -80,6 +86,10 @@ export default function Home() {
     const payload = { headers: headerInput, config: analysisConfig };
     lastSubmissionRef.current = payload;
     setIsViewCleared(false);
+    if (bypassTokenRef.current) {
+      void submit(payload, { bypassToken: bypassTokenRef.current });
+      return;
+    }
     void submit(payload);
   }, [analysisConfig, canAnalyse, headerInput, submit]);
 
@@ -92,7 +102,44 @@ export default function Home() {
     setCachedTimestamp(null);
     setIsViewCleared(true);
     lastSubmissionRef.current = null;
-  }, [cancel, clear]);
+    bypassTokenRef.current = null;
+    clearCaptchaChallenge();
+  }, [cancel, clear, clearCaptchaChallenge]);
+
+  const handleCaptchaVerify = useCallback(
+    async (payload: CaptchaVerifyPayload): Promise<string> => {
+      const response = await apiClient.post<CaptchaVerifyResponse, CaptchaVerifyPayload>(
+        "/api/captcha/verify",
+        payload,
+      );
+      if (!response.bypassToken) {
+        throw new Error("Captcha verification failed.");
+      }
+      return response.bypassToken;
+    },
+    [],
+  );
+
+  const handleCaptchaSuccess = useCallback((bypassToken: string) => {
+    bypassTokenRef.current = bypassToken;
+  }, []);
+
+  const handleCaptchaRetry = useCallback(() => {
+    const payload = lastSubmissionRef.current;
+    if (!payload) {
+      return;
+    }
+    setIsViewCleared(false);
+    if (bypassTokenRef.current) {
+      void submit(payload, { bypassToken: bypassTokenRef.current });
+      return;
+    }
+    void submit(payload);
+  }, [submit]);
+
+  const handleCaptchaClose = useCallback(() => {
+    clearCaptchaChallenge();
+  }, [clearCaptchaChallenge]);
 
   return (
     <main className="min-h-screen bg-background text-text">
@@ -112,7 +159,10 @@ export default function Home() {
           </header>
 
           <section className="grid gap-6 lg:grid-cols-[2fr_1fr]">
-            <HeaderInput value={headerInput} onChange={setHeaderInput} />
+            <div className="flex flex-col gap-6">
+              <HeaderInput value={headerInput} onChange={setHeaderInput} />
+              <AnalysisControls config={analysisConfig} onChange={setAnalysisConfig} />
+            </div>
 
             <div className="flex flex-col gap-6">
               <FileDropZone onFileContent={setHeaderInput} />
@@ -198,6 +248,14 @@ export default function Home() {
           ) : null}
         </div>
       </div>
+      <CaptchaChallenge
+        isOpen={Boolean(captchaChallenge)}
+        challenge={captchaChallenge}
+        onVerify={handleCaptchaVerify}
+        onSuccess={handleCaptchaSuccess}
+        onRetry={handleCaptchaRetry}
+        onClose={handleCaptchaClose}
+      />
     </main>
   );
 }

@@ -18,8 +18,10 @@ const { submitSpy, cancelSpy, useAnalysisState } = vi.hoisted(() => {
       progress: null,
       result: null,
       error: null,
+      captchaChallenge: null,
       submit: submitSpy,
       cancel: cancelSpy,
+      clearCaptchaChallenge: vi.fn(),
     },
   };
 });
@@ -86,6 +88,7 @@ const resetUseAnalysisState = (): void => {
   useAnalysisState.progress = null;
   useAnalysisState.result = null;
   useAnalysisState.error = null;
+  useAnalysisState.captchaChallenge = null;
 };
 
 afterEach(() => {
@@ -151,5 +154,16 @@ describe("Home page", () => {
 
     const results = container.querySelector('[data-testid="analysis-results"]');
     expect(results).not.toBeNull();
+  });
+
+  it("renders the captcha modal when rate limited", () => {
+    useAnalysisState.captchaChallenge = {
+      challengeToken: "challenge-123",
+      imageBase64: "image-data",
+    };
+
+    const { container } = render(<Home />);
+    const modal = container.querySelector('[data-testid="captcha-challenge"]');
+    expect(modal).not.toBeNull();
   });
 });

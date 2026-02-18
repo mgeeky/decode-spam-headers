@@ -1,13 +1,12 @@
+import type { CaptchaChallengeData } from "../types/captcha";
+
 const DEFAULT_BASE_URL = "http://localhost:8000";
 
 export interface ApiErrorPayload {
   error?: string;
   detail?: string;
   retryAfter?: number;
-  captchaChallenge?: {
-    challengeToken: string;
-    imageBase64: string;
-  };
+  captchaChallenge?: CaptchaChallengeData;
 }
 
 export class ApiError extends Error {

@@ -1,7 +1,8 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { flushSync } from "react-dom";
 
-import { apiClient, type SseEvent } from "../lib/api-client";
+import { ApiError, apiClient, type SseEvent } from "../lib/api-client";
+import type { CaptchaChallengeData } from "../types/captcha";
 import type { AnalysisConfig, AnalysisProgress, AnalysisReport } from "../types/analysis";
 
 export type AnalysisStatus = "idle" | "submitting" | "analysing" | "complete" | "error" | "timeout";
@@ -16,8 +17,14 @@ export interface UseAnalysisState {
   progress: AnalysisProgress | null;
   result: AnalysisReport | null;
   error: string | null;
-  submit: (request: AnalysisRequest) => Promise<void>;
+  captchaChallenge: CaptchaChallengeData | null;
+  submit: (request: AnalysisRequest, options?: AnalysisSubmitOptions) => Promise<void>;
   cancel: () => void;
+  clearCaptchaChallenge: () => void;
+}
+
+export interface AnalysisSubmitOptions {
+  bypassToken?: string;
 }
 
 const scheduleTask = (handler: () => void): void => {
@@ -29,6 +36,7 @@ const useAnalysis = (): UseAnalysisState => {
   const [progress, setProgress] = useState<AnalysisProgress | null>(null);
   const [result, setResult] = useState<AnalysisReport | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [captchaChallenge, setCaptchaChallenge] = useState<CaptchaChallengeData | null>(null);
 
   const abortRef = useRef<AbortController | null>(null);
   const requestIdRef = useRef(0);
@@ -47,6 +55,11 @@ const useAnalysis = (): UseAnalysisState => {
     setProgress(null);
     setResult(null);
     setError(null);
+    setCaptchaChallenge(null);
+  }, []);
+
+  const clearCaptchaChallenge = useCallback(() => {
+    setCaptchaChallenge(null);
   }, []);
 
   const handleEvent = useCallback(
@@ -92,7 +105,7 @@ const useAnalysis = (): UseAnalysisState => {
   );
 
   const submit = useCallback(
-    async (request: AnalysisRequest): Promise<void> => {
+    async (request: AnalysisRequest, options: AnalysisSubmitOptions = {}): Promise<void> => {
       requestIdRef.current += 1;
       const requestId = requestIdRef.current;
 
@@ -106,10 +119,15 @@ const useAnalysis = (): UseAnalysisState => {
       hasProgressRef.current = false;
 
       try {
+        const headers = options.bypassToken
+          ? { "x-captcha-bypass-token": options.bypassToken }
+          : undefined;
+
         await apiClient.stream<AnalysisRequest, AnalysisProgress | AnalysisReport>("/api/analyse", {
           body: request,
           signal: controller.signal,
           onEvent: (event) => handleEvent(event, requestId, controller.signal),
+          headers,
         });
       } catch (err) {
         if (!mountedRef.current || controller.signal.aborted) {
@@ -120,7 +138,13 @@ const useAnalysis = (): UseAnalysisState => {
         }
 
         inFlightRef.current = false;
-        const message = err instanceof Error ? err.message : "Unknown error";
+        let message = err instanceof Error ? err.message : "Unknown error";
+        if (err instanceof ApiError) {
+          message = err.message;
+          if (err.status === 429 && err.payload?.captchaChallenge) {
+            setCaptchaChallenge(err.payload.captchaChallenge);
+          }
+        }
         setError(message);
         setStatus("error");
       }
@@ -143,8 +167,10 @@ const useAnalysis = (): UseAnalysisState => {
     progress,
     result,
     error,
+    captchaChallenge,
     submit,
     cancel,
+    clearCaptchaChallenge,
   };
 };
 
