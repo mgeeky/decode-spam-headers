@@ -110,6 +110,27 @@ describe("AnalysisControls", () => {
     );
   });
 
+  it("updates toggles without a controlled config", async () => {
+    setupFetchMock(sampleTests);
+    const handleChange = vi.fn();
+
+    const { container } = render(<AnalysisControls onChange={handleChange} />);
+
+    await act(async () => {
+      await flushPromises();
+    });
+
+    const decodeToggle = getToggle(container, "toggle-decode-all");
+    act(() => {
+      decodeToggle.dispatchEvent(new MouseEvent("click", { bubbles: true }));
+    });
+
+    expect(decodeToggle.getAttribute("aria-checked")).toBe("true");
+    expect(handleChange).toHaveBeenLastCalledWith(
+      expect.objectContaining({ decodeAll: true }),
+    );
+  });
+
   it("updates toggles on click and keyboard", async () => {
     setupFetchMock(sampleTests);
     const handleChange = vi.fn();

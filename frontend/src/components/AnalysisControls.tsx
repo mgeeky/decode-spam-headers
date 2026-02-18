@@ -1,6 +1,6 @@
 "use client";
 
-import type { KeyboardEvent } from "react";
+import { useState, type KeyboardEvent } from "react";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import {
   faToggleOff,
@@ -34,19 +34,29 @@ const handleToggleKeyDown = (
 };
 
 export default function AnalysisControls({
-  config = defaultConfig,
+  config,
   onChange,
 }: AnalysisControlsProps) {
+  const [internalConfig, setInternalConfig] = useState<AnalysisConfig>(defaultConfig);
+  const resolvedConfig = config ?? internalConfig;
+
+  const commitConfig = (nextConfig: AnalysisConfig) => {
+    if (!config) {
+      setInternalConfig(nextConfig);
+    }
+    onChange(nextConfig);
+  };
+
   const updateTests = (nextTestIds: number[]) => {
-    onChange({ ...config, testIds: nextTestIds });
+    commitConfig({ ...resolvedConfig, testIds: nextTestIds });
   };
 
   const toggleResolve = () => {
-    onChange({ ...config, resolve: !config.resolve });
+    commitConfig({ ...resolvedConfig, resolve: !resolvedConfig.resolve });
   };
 
   const toggleDecodeAll = () => {
-    onChange({ ...config, decodeAll: !config.decodeAll });
+    commitConfig({ ...resolvedConfig, decodeAll: !resolvedConfig.decodeAll });
   };
 
   return (
@@ -70,15 +80,15 @@ export default function AnalysisControls({
             <button
               type="button"
               role="switch"
-              aria-checked={config.resolve}
+              aria-checked={resolvedConfig.resolve}
               aria-label="Toggle DNS resolution"
               data-testid="toggle-resolve"
               className="inline-flex items-center gap-2 rounded-full border border-info/20 bg-background/60 px-3 py-2 text-xs text-text/70 transition hover:border-info/40 hover:text-text focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-info"
               onClick={toggleResolve}
               onKeyDown={(event) => handleToggleKeyDown(event, toggleResolve)}
             >
-              <FontAwesomeIcon icon={config.resolve ? faToggleOn : faToggleOff} />
-              {config.resolve ? "On" : "Off"}
+              <FontAwesomeIcon icon={resolvedConfig.resolve ? faToggleOn : faToggleOff} />
+              {resolvedConfig.resolve ? "On" : "Off"}
             </button>
           </div>
           <div className="flex items-center justify-between gap-4 rounded-xl border border-info/10 bg-background/40 p-4">
@@ -94,20 +104,20 @@ export default function AnalysisControls({
             <button
               type="button"
               role="switch"
-              aria-checked={config.decodeAll}
+              aria-checked={resolvedConfig.decodeAll}
               aria-label="Toggle decode all"
               data-testid="toggle-decode-all"
               className="inline-flex items-center gap-2 rounded-full border border-info/20 bg-background/60 px-3 py-2 text-xs text-text/70 transition hover:border-info/40 hover:text-text focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-info"
               onClick={toggleDecodeAll}
               onKeyDown={(event) => handleToggleKeyDown(event, toggleDecodeAll)}
             >
-              <FontAwesomeIcon icon={config.decodeAll ? faToggleOn : faToggleOff} />
-              {config.decodeAll ? "On" : "Off"}
+              <FontAwesomeIcon icon={resolvedConfig.decodeAll ? faToggleOn : faToggleOff} />
+              {resolvedConfig.decodeAll ? "On" : "Off"}
             </button>
           </div>
         </div>
       </div>
-      <TestSelector selectedTestIds={config.testIds} onSelectionChange={updateTests} />
+      <TestSelector selectedTestIds={resolvedConfig.testIds} onSelectionChange={updateTests} />
     </section>
   );
 }
