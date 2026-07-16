@@ -2153,7 +2153,7 @@ class SMTPHeadersAnalysis:
 
         for sim in similar_headers:
             if sim[0].lower() in _header.lower():
-                _header = re.sub(sim[0], sim[1], _header, re.I)
+                _header = re.sub(sim[0], sim[1], _header, flags=re.I)
 
                 for (num, header, value) in self.headers:
                     if header.lower() == _header.lower():
@@ -3504,7 +3504,7 @@ Results will be unsound. Make sure you have pasted your headers with correct spa
             try:
                 t = int(parts[4])
                 if t in SMTPHeadersAnalysis.Trend_Type_AntiSpam.keys():
-                    result += '  (' + SMTPHeadersAnalysis.Trend_Type_AntiSpam[k] + ')'
+                    result += '  (' + SMTPHeadersAnalysis.Trend_Type_AntiSpam[t] + ')'
             except:
                 pass
 
@@ -3854,14 +3854,14 @@ Results will be unsound. Make sure you have pasted your headers with correct spa
 
         m1 = re.search(r'\=\?[a-z0-9\-]+\?Q\?', v1, re.I)
         if m1:
-            v1d = emailheader.decode_header(value)[0][0]
+            v1d = emailheader.decode_header(v1)[0][0]
             if type(v1d) == bytes:
                 v1d = v1d.decode(errors='ignore')
             v1 = v1d
 
         m2 = re.search(r'\=\?[a-z0-9\-]+\?Q\?', v2, re.I)
         if m2:
-            v2d = emailheader.decode_header(value)[0][0]
+            v2d = emailheader.decode_header(v2)[0][0]
             if type(v2d) == bytes:
                 v2d = v2d.decode(errors='ignore')
             v2 = v2d
