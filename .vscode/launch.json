@@ -1,0 +1,18 @@
+{
+    "configurations": [
+        {
+            "name": "Python Debugger: Python File",
+            "type": "debugpy",
+            "request": "launch",
+            "program": "${file}",
+            "args": [
+                "--outfile", "report.html",
+                "--format", "html",
+                "C:\\no-file-specified-in-launch-json"
+            ],
+            "console": "integratedTerminal",
+            "justMyCode": true,
+            "purpose": ["debug-in-terminal"]
+        }
+    ]
+}
